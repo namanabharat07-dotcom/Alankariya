@@ -20,56 +20,58 @@ interface Particle {
 }
 
 export default function PremiumWelcome({ onComplete }: PremiumWelcomeProps) {
-  const [phase, setPhase] = useState<number>(1);
+  // Animating steps 1 to 6
+  const [step, setStep] = useState<number>(1);
   const [showSkip, setShowSkip] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationFrameRef = useRef<number>(0);
 
-  // Skip button appears after 1.5 seconds for accessibility and smooth exit
+  // Skip button appears after 2 seconds (per implementation instructions)
   useEffect(() => {
     const skipTimer = setTimeout(() => {
       setShowSkip(true);
-    }, 1500);
+    }, 2000);
     return () => clearTimeout(skipTimer);
   }, []);
 
-  // Timed Phase Sequence for Timeline precision
+  // Precise timing sequence aligned with the official 6-step flow (approx 6.5s total runtime)
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
 
-    // Phase 1: Silence (0.0s - 0.5s)
-    // Phase 2: Divine Light (0.5s)
-    timers.push(setTimeout(() => setPhase(2), 500));
+    // STEP 1: IGNITION (0:00 - 0:01) -> Golden beam descends, forming droplet & ripple.
+    setStep(1);
 
-    // Phase 3: Namam Formation (1.5s)
-    timers.push(setTimeout(() => setPhase(3), 1500));
+    // STEP 2: FORMATION (0:01 - 0:02) -> White "U" shape emerges & red drop appears.
+    timers.push(setTimeout(() => setStep(2), 1000));
 
-    // Phase 4: Energy Reveal Ring (3.0s)
+    // STEP 3: REVEAL (0:02 - 0:03) -> Golden energy ring locks, bright flare shines.
     timers.push(setTimeout(() => {
-      setPhase(4);
-      triggerEnergyBurst();
-    }, 3000));
+      setStep(3);
+      triggerRevealBurst();
+    }, 2000));
 
-    // Phase 5: Brand Identity Text (4.0s)
-    timers.push(setTimeout(() => setPhase(5), 4000));
+    // STEP 4: ASCEND (0:03 - 0:04) -> Logo rises above a golden sunrise horizon.
+    timers.push(setTimeout(() => setStep(4), 3100));
 
-    // Phase 6: Welcome & Loading Progress (4.8s)
-    timers.push(setTimeout(() => setPhase(6), 4800));
+    // STEP 5: IDENTITY (0:04 - 0:05) -> ALANKAPRIYA and tagline fade in with ground light glow.
+    timers.push(setTimeout(() => setStep(5), 4200));
 
-    // Final Transition (6.0s - Fades smoothly and finishes)
+    // STEP 6: WELCOME (0:05 - 0:06+) -> "WELCOME TO ALANKAPRIYA" + golden progress bar animation.
+    timers.push(setTimeout(() => setStep(6), 5200));
+
+    // TRANSITION: Fades into the homepage seamlessly
     timers.push(setTimeout(() => {
-      // Persist welcome viewed status
       localStorage.setItem('alankapriya_welcome_viewed', 'true');
       onComplete();
-    }, 6200));
+    }, 6900));
 
     return () => {
       timers.forEach(t => clearTimeout(t));
     };
   }, [onComplete]);
 
-  // High-performance HTML5 Canvas Golden Dust Particle Engine (60 FPS, GPU accelerated)
+  // High-performance canvas particle system mimicking high-end luxury graphics (60 FPS)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -84,57 +86,56 @@ export default function PremiumWelcome({ onComplete }: PremiumWelcomeProps) {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Initialize 70 premium gold & bronze ambient dust particles
-    const particleColors = [
-      'rgba(212, 175, 55, ', // Metallic Gold
-      'rgba(245, 158, 11, ', // Amber
-      'rgba(251, 191, 36, ', // Soft Warm Yellow
-      'rgba(255, 255, 255, ' // Pure Soft White
+    const goldColors = [
+      'rgba(212, 175, 55, ',  // Metallic Gold
+      'rgba(245, 158, 11, ',  // Amber Gold
+      'rgba(251, 191, 36, ',  // Warm Yellow
+      'rgba(255, 255, 255, '  // Diamond Sparkle White
     ];
 
-    const particles: Particle[] = Array.from({ length: 70 }).map(() => ({
+    // Seed ambient dust particles
+    const particles: Particle[] = Array.from({ length: 60 }).map(() => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: -Math.random() * 0.6 - 0.2, // Drift upward slowly
-      size: Math.random() * 2.2 + 0.6,
-      alpha: Math.random() * 0.6 + 0.1,
-      baseAlpha: Math.random() * 0.5 + 0.2,
-      speedMultiplier: Math.random() * 0.5 + 0.75,
-      twinkleSpeed: Math.random() * 0.02 + 0.005,
-      color: particleColors[Math.floor(Math.random() * particleColors.length)]
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: -Math.random() * 0.5 - 0.15, // Drift upwards slowly like dust
+      size: Math.random() * 1.8 + 0.6,
+      alpha: Math.random() * 0.5 + 0.1,
+      baseAlpha: Math.random() * 0.4 + 0.15,
+      speedMultiplier: Math.random() * 0.4 + 0.8,
+      twinkleSpeed: Math.random() * 0.015 + 0.005,
+      color: goldColors[Math.floor(Math.random() * goldColors.length)]
     }));
 
     particlesRef.current = particles;
 
-    let time = 0;
-    const render = () => {
-      time += 0.01;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.07)'; // Slight trail for cinematic smoothness
+    let tick = 0;
+    const draw = () => {
+      tick += 0.012;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)'; // Tail trailing effect for motion blur
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       particlesRef.current.forEach(p => {
-        // Twinkle effect (sine oscillation on opacity)
-        p.alpha = p.baseAlpha + Math.sin(time * p.twinkleSpeed * 100) * 0.15;
-        p.alpha = Math.max(0.05, Math.min(1, p.alpha));
+        // Subtle twinkling opacity
+        p.alpha = p.baseAlpha + Math.sin(tick * p.twinkleSpeed * 110) * 0.12;
+        p.alpha = Math.max(0.04, Math.min(0.9, p.alpha));
 
-        // Slow side-drift wave
-        const drift = Math.sin(time + p.x * 0.01) * 0.1;
-        p.x += p.vx + drift;
+        // Lateral wavy movement
+        p.x += p.vx + Math.sin(tick + p.y * 0.008) * 0.08;
         p.y += p.vy * p.speedMultiplier;
 
-        // Boundaries recycle
-        if (p.y < -10) {
-          p.y = canvas.height + 10;
+        // Reset if drifted off screen
+        if (p.y < -15) {
+          p.y = canvas.height + 15;
           p.x = Math.random() * canvas.width;
         }
-        if (p.x < -10) p.x = canvas.width + 10;
-        if (p.x > canvas.width + 10) p.x = -10;
+        if (p.x < -15) p.x = canvas.width + 15;
+        if (p.x > canvas.width + 15) p.x = -15;
 
-        // Render shadow blur for luxury glow on larger particles
-        if (p.size > 1.8) {
-          ctx.shadowBlur = 8;
-          ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
+        // Custom glow effect for high-end feel
+        if (p.size > 1.5) {
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = 'rgba(212, 175, 55, 0.5)';
         } else {
           ctx.shadowBlur = 0;
         }
@@ -145,11 +146,11 @@ export default function PremiumWelcome({ onComplete }: PremiumWelcomeProps) {
         ctx.fill();
       });
 
-      ctx.shadowBlur = 0; // Reset shadow for canvas performance
-      animationFrameRef.current = requestAnimationFrame(render);
+      ctx.shadowBlur = 0;
+      animationFrameRef.current = requestAnimationFrame(draw);
     };
 
-    animationFrameRef.current = requestAnimationFrame(render);
+    animationFrameRef.current = requestAnimationFrame(draw);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
@@ -157,39 +158,38 @@ export default function PremiumWelcome({ onComplete }: PremiumWelcomeProps) {
     };
   }, []);
 
-  // Trigger high-end gold shockwave/burst particles on Phase 4 (Energy Reveal)
-  const triggerEnergyBurst = () => {
+  // Step 3 Energy Flare / Burst Particles
+  const triggerRevealBurst = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2 - 35; // Position aligned near Namam center
-    
-    // Spawn 45 radial speed particles
-    const burstParticles: Particle[] = Array.from({ length: 45 }).map(() => {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    const burstCount = 50;
+    const burstSparks: Particle[] = Array.from({ length: burstCount }).map(() => {
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 2.5 + 1.5;
+      const speed = Math.random() * 3.5 + 1.5;
       return {
-        x: centerX,
-        y: centerY,
+        x: cx,
+        y: cy,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        size: Math.random() * 2.8 + 1.2,
+        size: Math.random() * 2.5 + 1.0,
         alpha: 1,
         baseAlpha: 0.8,
-        speedMultiplier: 1.1,
-        twinkleSpeed: 0.05,
-        color: 'rgba(245, 158, 11, ' // Pure Amber Sparks
+        speedMultiplier: 1.05,
+        twinkleSpeed: 0.03,
+        color: 'rgba(245, 158, 11, ' // Gold sparks
       };
     });
 
-    // Add burst particles to main registry and prune them slowly as they leave screen
-    particlesRef.current = [...particlesRef.current, ...burstParticles];
-    
-    // Cleanup burst particles after 2.5 seconds to conserve GPU
+    particlesRef.current = [...particlesRef.current, ...burstSparks];
+
+    // Cull burst particles to prevent memory overhead
     setTimeout(() => {
-      particlesRef.current = particlesRef.current.slice(0, 70);
-    }, 2500);
+      particlesRef.current = particlesRef.current.slice(0, 60);
+    }, 2000);
   };
 
   const handleSkip = () => {
@@ -199,35 +199,31 @@ export default function PremiumWelcome({ onComplete }: PremiumWelcomeProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black overflow-hidden select-none"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black overflow-hidden select-none"
       id="brand-opening-wrapper"
     >
-      {/* Cinematic 60 FPS Particle Canvas */}
+      {/* 1. Cinematic Particle Canvas */}
       <canvas 
         ref={canvasRef} 
         className="absolute inset-0 pointer-events-none" 
         style={{ mixBlendMode: 'screen' }} 
       />
 
-      {/* Luxury Cinematic Spotlight & Vignette */}
+      {/* 2. Premium Spotlight Radial Vignette */}
       <div 
-        className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_15%,rgba(0,0,0,0.85)_100%)]" 
-      />
-      <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.055)_0%,transparent_72%)] pointer-events-none transition-opacity duration-1000" 
-        style={{ opacity: phase >= 3 ? 1 : 0 }}
+        className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_10%,rgba(0,0,0,0.92)_100%)]" 
       />
 
-      {/* Accessible Premium Skip Button */}
+      {/* 3. Small Luxurious "Skip Intro" Button (Bottom Right) */}
       <AnimatePresence>
         {showSkip && (
           <motion.button
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 0.65, y: 0 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 0.6, y: 0 }}
             exit={{ opacity: 0 }}
-            whileHover={{ opacity: 1, borderColor: 'rgba(212,175,55,0.4)', backgroundColor: 'rgba(10,10,10,0.6)' }}
+            whileHover={{ opacity: 1, scale: 1.03, borderColor: 'rgba(212,175,55,0.45)', backgroundColor: 'rgba(10,10,10,0.7)' }}
             onClick={handleSkip}
-            className="absolute top-6 right-6 z-55 flex items-center space-x-1.5 px-4.5 py-2 rounded-full border border-stone-900 bg-stone-950/40 text-stone-300 text-[10px] font-extrabold uppercase tracking-[0.18em] transition-all cursor-pointer shadow-xl backdrop-blur-md"
+            className="absolute bottom-8 right-8 z-55 flex items-center space-x-1.5 px-4.5 py-2.5 rounded-full border border-stone-900 bg-stone-950/50 text-stone-300 text-[10px] font-extrabold uppercase tracking-[0.2em] transition-all cursor-pointer backdrop-blur-md shadow-2xl"
             id="brand-opening-skip"
           >
             <span>Skip Intro</span>
@@ -236,131 +232,131 @@ export default function PremiumWelcome({ onComplete }: PremiumWelcomeProps) {
         )}
       </AnimatePresence>
 
-      {/* Timeline Core Orchestration Container */}
-      <div className="relative z-10 flex flex-col items-center max-w-lg w-full px-6 text-center select-none">
+      {/* 4. Sequential Core Stage */}
+      <div className="relative z-10 flex flex-col items-center max-w-xl w-full px-6 text-center select-none">
         
-        {/* PHASE 2: Descending Divine Golden Light Beam */}
+        {/* STEP 1: IGNITION */}
         <AnimatePresence>
-          {phase === 2 && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "35vh", opacity: [0, 1, 0.75, 0] }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-              className="absolute top-[-30vh] left-1/2 -translate-x-1/2 w-[2px] bg-gradient-to-b from-amber-400 via-amber-300 to-transparent shadow-[0_0_20px_#f59e0b] pointer-events-none"
-            />
+          {step === 1 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center" id="welcome-step-ignition">
+              {/* Thin Golden Beam descending */}
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "45vh", opacity: [0, 1, 1, 0.8] }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.9, ease: "easeOut" }}
+                className="w-[2px] bg-gradient-to-b from-amber-400/10 via-amber-300 to-amber-500 shadow-[0_0_15px_#f59e0b] relative"
+              />
+              
+              {/* Droplet & Golden Ripple at the collision point */}
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 1] }}
+                className="w-4 h-4 rounded-full bg-amber-400 shadow-[0_0_12px_#f59e0b] mt-[-6px]"
+              />
+
+              <motion.div
+                initial={{ scale: 0.1, opacity: 0 }}
+                animate={{ scale: [0.1, 2.8, 4.5], opacity: [0, 0.8, 0] }}
+                transition={{ duration: 1.0, repeat: Infinity, repeatDelay: 0.2 }}
+                className="absolute w-12 h-12 rounded-full border border-amber-500/40 mt-[34vh] pointer-events-none"
+              />
+            </div>
           )}
         </AnimatePresence>
 
-        {/* PHASES 3 & 4: Symmetrical Thenkalai Divine Namam Emblem */}
-        <div className="relative flex items-center justify-center w-52 h-56 mb-12 select-none">
-          
-          {/* Concentric Energy Circles Shockwaves (Phase 4) */}
-          <AnimatePresence>
-            {phase >= 4 && (
-              <>
-                {/* Shockwave Ring 1 */}
-                <motion.div
-                  initial={{ scale: 0.2, opacity: 0 }}
-                  animate={{ scale: [0.3, 1.4, 1.7], opacity: [0, 0.95, 0.4, 0] }}
-                  transition={{ duration: 1.8, ease: "easeOut" }}
-                  className="absolute rounded-full border border-amber-500/35 shadow-[0_0_30px_rgba(245,158,11,0.25)] pointer-events-none"
-                  style={{ width: '280px', height: '280px' }}
+        {/* LOGO CONTAINER: Animating through FORMATION, REVEAL and ASCEND */}
+        <AnimatePresence>
+          {step >= 2 && (
+            <motion.div
+              layoutId="luxury-brand-logo-id"
+              initial={{ scale: 0.75, opacity: 0, y: 0 }}
+              animate={{ 
+                scale: step >= 3 ? 1 : 0.9, 
+                opacity: 1,
+                y: step >= 4 ? -45 : 0 // Rising upward in STEP 4 (ASCEND)
+              }}
+              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+              className="relative w-48 h-48 flex items-center justify-center mb-6"
+            >
+              {/* STEP 3 REVEAL: Symmetrical golden rotating ring */}
+              <AnimatePresence>
+                {step >= 3 && (
+                  <motion.div
+                    initial={{ rotate: -180, scale: 0.3, opacity: 0 }}
+                    animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                    transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute w-44 h-44 rounded-full border border-amber-500/25 shadow-[0_0_25px_rgba(245,158,11,0.12)] pointer-events-none"
+                    style={{ borderStyle: 'double', borderWidth: '3px' }}
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Halo radial backing */}
+              <div 
+                className="absolute w-36 h-36 rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.065)_0%,transparent_75%)] pointer-events-none" 
+              />
+
+              {/* Symmetrical High-Fidelity Official Namam Vector */}
+              <svg viewBox="0 0 200 200" className="w-40 h-40 drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+                {/* Glowing Background white path */}
+                <motion.path
+                  d="M 55,60 L 80,64 C 80,110 84,135 86,145 C 86,152 92,156 100,156 C 108,156 114,152 114,145 C 114,135 118,110 118,64 L 143,60 C 137,100 131,138 123,145 C 117,150 115,144 110,147 C 105,150 103,165 100,165 C 97,165 95,150 90,147 C 85,144 83,150 77,145 C 69,138 63,100 55,60 Z"
+                  fill="#FFFFFF"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
                 />
-                {/* Shockwave Ring 2 */}
-                <motion.div
-                  initial={{ scale: 0.2, opacity: 0 }}
-                  animate={{ scale: [0.3, 1.2, 1.45], opacity: [0, 0.75, 0.25, 0] }}
-                  transition={{ delay: 0.25, duration: 1.8, ease: "easeOut" }}
-                  className="absolute rounded-full border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.15)] pointer-events-none"
-                  style={{ width: '280px', height: '280px' }}
+
+                {/* Symmetrical Central Red Droplet (Sri Churnam) */}
+                <motion.path
+                  d="M 100,45 C 99,68 91,108 91,126 C 91,138 95,144 100,144 C 105,144 109,138 109,126 C 109,108 101,68 100,45 Z"
+                  fill="#E31E24"
+                  initial={{ scaleY: 0, originY: 1, opacity: 0 }}
+                  animate={{ scaleY: 1, opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                 />
-                {/* Steady Subtle Halo */}
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1.0, opacity: 0.15 }}
-                  transition={{ duration: 2 }}
-                  className="absolute rounded-full border border-amber-500/10 pointer-events-none"
-                  style={{ width: '230px', height: '230px' }}
-                />
-              </>
-            )}
-          </AnimatePresence>
+              </svg>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Symmetrical High-Fidelity Namam Vector Art (Glow and Fill Dual-rendering) */}
+        {/* STEP 4: ASCEND -> Sunrise/Golden Horizon at the bottom of the logo */}
+        <AnimatePresence>
+          {step >= 4 && (
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 0.85, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+              className="absolute bottom-[20vh] left-1/2 -translate-x-1/2 w-80 h-10 pointer-events-none select-none"
+              id="welcome-step-ascend-horizon"
+            >
+              {/* Symmetrical Curved golden Horizon line representing smart shopping over Earth */}
+              <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_12px_rgba(245,158,11,0.8)] relative rounded-full" />
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-500/10 via-transparent to-transparent blur-md" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* STEP 5: IDENTITY -> ALANKAPRIYA Title and Tagline */}
+        <div className="h-32 flex flex-col items-center justify-start overflow-hidden relative select-none">
           <AnimatePresence>
-            {phase >= 3 && (
-              <div className="relative w-full h-full flex items-center justify-center">
-                
-                {/* Soft volumetric glow layers under SVGs */}
-                <svg viewBox="0 0 200 200" className="absolute w-44 h-44 pointer-events-none" style={{ filter: 'blur(11px)', mixBlendMode: 'screen' }}>
-                  {/* Glowing White U-Shape Background */}
-                  <motion.path
-                    d="M 55,60 L 80,64 C 80,110 84,135 86,145 C 86,152 92,156 100,156 C 108,156 114,152 114,145 C 114,135 118,110 118,64 L 143,60 C 137,100 131,138 123,145 C 117,150 115,144 110,147 C 105,150 103,165 100,165 C 97,165 95,150 90,147 C 85,144 83,150 77,145 C 69,138 63,100 55,60 Z"
-                    fill="#ffffff"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.4 }}
-                    transition={{ delay: 0.1, duration: 1.2 }}
-                  />
-                  {/* Glowing Red Tilak Background */}
-                  <motion.path
-                    d="M 100,45 C 99,68 91,108 91,126 C 91,138 95,144 100,144 C 105,144 109,138 109,126 C 109,108 101,68 100,45 Z"
-                    fill="#E31E24"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.65 }}
-                    transition={{ delay: 0.4, duration: 1.2 }}
-                  />
-                </svg>
-
-                {/* Sharp high-contrast premium layers */}
-                <svg viewBox="0 0 200 200" className="relative w-44 h-44 drop-shadow-[0_4px_12px_rgba(0,0,0,0.85)]">
-                  {/* Symmetrical White Thenkalai "U" Shape */}
-                  <motion.path
-                    d="M 55,60 L 80,64 C 80,110 84,135 86,145 C 86,152 92,156 100,156 C 108,156 114,152 114,145 C 114,135 118,110 118,64 L 143,60 C 137,100 131,138 123,145 C 117,150 115,144 110,147 C 105,150 103,165 100,165 C 97,165 95,150 90,147 C 85,144 83,150 77,145 C 69,138 63,100 55,60 Z"
-                    fill="#FFFFFF"
-                    stroke="rgba(212,175,55,0.2)"
-                    strokeWidth="0.5"
-                    initial={{ pathLength: 0, fillOpacity: 0 }}
-                    animate={{ pathLength: 1, fillOpacity: 1 }}
-                    transition={{ 
-                      pathLength: { duration: 1.5, ease: "easeInOut" },
-                      fillOpacity: { delay: 0.5, duration: 1.2, ease: "easeOut" }
-                    }}
-                  />
-
-                  {/* Symmetrical Central Red Flame / Sri Churnam */}
-                  <motion.path
-                    d="M 100,45 C 99,68 91,108 91,126 C 91,138 95,144 100,144 C 105,144 109,138 109,126 C 109,108 101,68 100,45 Z"
-                    fill="#E31E24"
-                    initial={{ scaleY: 0, originY: 1, opacity: 0 }}
-                    animate={{ scaleY: 1, opacity: 1 }}
-                    transition={{ delay: 0.8, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                  />
-                </svg>
-
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* PHASE 5: Brand Identity (Luxury serif & modern sans-serif) */}
-        <div className="h-28 flex flex-col items-center justify-start overflow-hidden relative">
-          <AnimatePresence>
-            {phase >= 5 && (
+            {step >= 5 && (
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                className="space-y-3.5"
+                exit={{ opacity: 0, y: -18 }}
+                transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-4"
               >
-                {/* Brand Title: Elegant serif font with broad premium tracking */}
-                <h1 className="font-serif text-3xl sm:text-4xl font-extrabold tracking-[0.25em] text-white">
+                {/* Brand Name: Serif typography styling */}
+                <h1 className="font-serif text-3xl sm:text-4.5xl font-extrabold tracking-[0.25em] text-white">
                   ALANKA<span className="text-amber-500 font-light italic">PRIYA</span>
                 </h1>
                 
-                {/* Slogan: Minimal modern gold/white sub-identity */}
-                <h2 className="font-sans text-[9px] sm:text-[10px] font-bold tracking-[0.22em] text-stone-400 uppercase flex items-center justify-center space-x-1.5">
+                {/* Tagline: Modern uppercase sans-serif with spacing */}
+                <h2 className="font-sans text-[10px] sm:text-[11px] font-extrabold tracking-[0.22em] text-stone-400 uppercase flex items-center justify-center space-x-2">
                   <span>Your Smart</span>
                   <span className="h-1 w-1 bg-amber-500 rounded-full inline-block" />
                   <span className="text-amber-400">Shopping Partner</span>
@@ -370,33 +366,33 @@ export default function PremiumWelcome({ onComplete }: PremiumWelcomeProps) {
           </AnimatePresence>
         </div>
 
-        {/* PHASE 6: Smooth Gold Loading Progress & Welcome */}
-        <div className="h-24 mt-4 flex flex-col items-center justify-center">
+        {/* STEP 6: WELCOME -> Preparing your shopping experience with a gold bar progress indicator */}
+        <div className="h-24 flex flex-col items-center justify-center relative mt-2">
           <AnimatePresence>
-            {phase >= 6 && (
+            {step >= 6 && (
               <motion.div
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="w-64 space-y-3 text-center"
+                className="w-72 space-y-3 text-center"
               >
                 {/* Welcome Heading */}
-                <span className="font-sans text-[10px] font-black tracking-[0.35em] text-amber-500 uppercase block">
+                <span className="font-sans text-[10px] font-black tracking-[0.38em] text-amber-500 uppercase block">
                   WELCOME
                 </span>
                 
-                {/* Status message */}
-                <p className="text-[10.5px] text-stone-500 font-light tracking-wide">
+                {/* Status caption */}
+                <p className="text-[11px] text-stone-500 font-light tracking-wide">
                   Preparing your intelligent shopping experience...
                 </p>
 
-                {/* Smooth Custom Gold Progress Loader */}
-                <div className="w-48 h-[1.5px] bg-stone-900 rounded-full overflow-hidden mx-auto relative mt-2">
+                {/* Symmetrical Thin Gold Progress Loader (animates left-to-right smoothly) */}
+                <div className="w-56 h-[1.5px] bg-stone-900 rounded-full overflow-hidden mx-auto relative mt-2.5">
                   <motion.div
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
-                    transition={{ duration: 1.2, ease: "easeInOut" }}
-                    className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 shadow-[0_0_8px_rgba(245,158,11,0.85)]"
+                    transition={{ duration: 1.3, ease: "easeInOut" }}
+                    className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600 shadow-[0_0_8px_rgba(245,158,11,0.9)]"
                   />
                 </div>
               </motion.div>
