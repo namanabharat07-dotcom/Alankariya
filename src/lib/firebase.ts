@@ -10,7 +10,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory, WatchlistItem, PriceHistoryItem, UserProfile, Comparison } from '../types';
+import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory, WatchlistItem, PriceHistoryItem, UserProfile, Comparison, NewsletterSubscriber } from '../types';
 
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -647,4 +647,81 @@ export async function deleteComparisonFromFirestore(id: string): Promise<void> {
     throw error;
   }
 }
+
+/**
+ * Subscribe a user to the newsletter
+ */
+export async function subscribeToNewsletterInFirestore(subscriber: NewsletterSubscriber): Promise<void> {
+  try {
+    const docRef = doc(db, 'newsletterSubscribers', subscriber.email.trim().toLowerCase());
+    await setDoc(docRef, cleanData(subscriber));
+  } catch (error) {
+    console.error('Error in subscribeToNewsletterInFirestore:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if an email is already subscribed
+ */
+export async function checkNewsletterSubscriptionStatus(email: string): Promise<'active' | 'disabled' | 'not_found'> {
+  try {
+    const docRef = doc(db, 'newsletterSubscribers', email.trim().toLowerCase());
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().status || 'active';
+    }
+    return 'not_found';
+  } catch (error) {
+    console.error('Error in checkNewsletterSubscriptionStatus:', error);
+    return 'not_found';
+  }
+}
+
+/**
+ * Get all newsletter subscribers
+ */
+export async function getNewsletterSubscribersFromFirestore(): Promise<NewsletterSubscriber[]> {
+  try {
+    const colRef = collection(db, 'newsletterSubscribers');
+    const snapshot = await getDocs(colRef);
+    const subscribers: NewsletterSubscriber[] = [];
+    snapshot.forEach((docSnap) => {
+      subscribers.push(docSnap.data() as NewsletterSubscriber);
+    });
+    // Sort by createdAt descending
+    subscribers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return subscribers;
+  } catch (error) {
+    console.warn('Error fetching newsletter subscribers (usually permission-denied for guest):', error);
+    return [];
+  }
+}
+
+/**
+ * Delete a newsletter subscriber
+ */
+export async function deleteNewsletterSubscriberFromFirestore(email: string): Promise<void> {
+  try {
+    const docRef = doc(db, 'newsletterSubscribers', email.trim().toLowerCase());
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting newsletter subscriber ${email} from Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Disable or Enable subscriber status
+ */
+export async function updateNewsletterSubscriberStatusInFirestore(email: string, status: 'active' | 'disabled'): Promise<void> {
+  try {
+    const docRef = doc(db, 'newsletterSubscribers', email.trim().toLowerCase());
+    await setDoc(docRef, { status, lastUpdated: new Date().toISOString() }, { merge: true });
+  } catch (error) {
+    console.error(`Error updating subscriber status for ${email}:`, error);
+    throw error;
+  }
+}
+
 

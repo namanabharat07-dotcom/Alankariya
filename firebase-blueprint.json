@@ -128,6 +128,19 @@
       }
     },
     {
+      "name": "newsletterSubscribers",
+      "description": "Premium Alankapriya newsletter subscribers with sources and metadata",
+      "fields": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "status": { "type": "string" },
+        "source": { "type": "string" },
+        "device": { "type": "string" },
+        "country": { "type": "string" },
+        "lastUpdated": { "type": "string" }
+      }
+    },
+    {
       "name": "marketing_campaigns",
       "description": "Automated email newsletter and alert campaigns",
       "fields": {

@@ -43,6 +43,7 @@ import CartDrawer from './components/CartDrawer';
 import StarProductsCarousel from './components/StarProductsCarousel';
 import AIFinder from './components/AIFinder';
 import PremiumWelcome from './components/PremiumWelcome';
+import { LargeNewsletterSection, CompactScrollBanner, ExitIntentPopup } from './components/NewsletterSection';
 import { 
   Sparkles, Award, ShieldCheck, ShoppingBag, ArrowRight, Star, 
   Filter, Check, Info, Mail, Send, MapPin, MessageSquare, HelpCircle, Layers, Flame, ShoppingCart, CloudLightning, Clock
@@ -2181,8 +2182,15 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      {/* Large Premium Newsletter Section before the footer */}
+      <LargeNewsletterSection />
+
       {/* Footer component */}
       <Footer onNavigate={handleNavigate} onReplayWelcome={handleReplayWelcome} />
+
+      {/* Compact Scroll Banner (at 60% scroll) & Exit Intent Popup */}
+      <CompactScrollBanner />
+      <ExitIntentPopup />
 
       {/* Sticky Mobile CTA button (CRO Optimized for mobile) */}
       <AnimatePresence>

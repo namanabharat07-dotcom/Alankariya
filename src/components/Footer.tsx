@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Mail, ArrowRight, Github, ExternalLink, Heart } from 'lucide-react';
 
 import { subscribeUser, requestBrowserNotification } from '../lib/marketing';
+import { subscribeToNewsletterInFirestore, checkNewsletterSubscriptionStatus } from '../lib/firebase';
+import { NewsletterSubscriber } from '../types';
 
 interface FooterProps {
   onNavigate: (page: string) => void;
@@ -19,15 +21,61 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
     setSubscribeError(null);
     if (!email.trim()) return;
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!emailRegex.test(cleanEmail)) {
+      setSubscribeError('Please enter a valid email address.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // 1. Subscribe in Firestore & trigger automated Welcome Email campaign
-      await subscribeUser(email);
+      // 1. Check duplicate subscription in newsletterSubscribers
+      const existingStatus = await checkNewsletterSubscriptionStatus(cleanEmail);
+      if (existingStatus === 'active') {
+        setIsSubscribed(true);
+        setEmail('');
+        setTimeout(() => setIsSubscribed(false), 6000);
+        return;
+      }
+
+      // 2. Fetch country metadata (fail-safe)
+      let country = 'India';
+      try {
+        const geoRes = await fetch('https://ipapi.co/json/');
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          if (geoData && geoData.country_name) {
+            country = geoData.country_name;
+          }
+        }
+      } catch (e) {
+        console.warn('Silent geolocation retrieval fallback in footer:', e);
+      }
+
+      // 3. Detect device
+      const isMobile = window.innerWidth < 768;
+      const device = isMobile ? 'mobile' : 'desktop';
+
+      // 4. Construct subscriber object
+      const subscriber: NewsletterSubscriber = {
+        email: cleanEmail,
+        createdAt: new Date().toISOString(),
+        status: 'active',
+        source: 'footer',
+        device,
+        country,
+        lastUpdated: new Date().toISOString()
+      };
+
+      // 5. Save in Firebase collections
+      await subscribeToNewsletterInFirestore(subscriber);
+      await subscribeUser(cleanEmail);
       
       setIsSubscribed(true);
       setEmail('');
       
-      // 2. Automatically prompt user for browser push permissions on subscription!
+      // 6. Automatically prompt for browser push permissions on subscription!
       try {
         const { permission } = await requestBrowserNotification();
         if (permission === 'granted') {

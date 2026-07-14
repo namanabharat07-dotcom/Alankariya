@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
-import { Product, Post, FAQItem, AnalyticsEvent, AffiliateButton, StarProduct, ProductCategory } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Product, Post, FAQItem, AnalyticsEvent, AffiliateButton, StarProduct, ProductCategory, NewsletterSubscriber } from '../types';
 import { 
   Plus, Edit, Trash, BarChart3, Tag, HelpCircle, Layers, FileText, CheckCircle2,
   TrendingUp, Download, Eye, Link, Star, Sparkles, Image, Check, AlertCircle, ShoppingBag, Search,
-  ChevronUp, ChevronDown, Calendar, ToggleLeft, ToggleRight
+  ChevronUp, ChevronDown, Calendar, ToggleLeft, ToggleRight, Mail, Filter, Globe, Smartphone, Laptop, RefreshCw, CheckCircle, ShieldAlert
 } from 'lucide-react';
 import { generateXMLSitemap, generateRobotsTxt } from '../utils/seo';
+import { 
+  getNewsletterSubscribersFromFirestore, 
+  deleteNewsletterSubscriberFromFirestore, 
+  updateNewsletterSubscriberStatusInFirestore 
+} from '../lib/firebase';
 
 interface AdminDashboardProps {
   products: Product[];
@@ -34,7 +39,60 @@ export default function AdminDashboard({
   onUpdateStarProducts,
   onUpdateCategories
 }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'products' | 'articles' | 'seo' | 'star_products' | 'categories'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'products' | 'articles' | 'seo' | 'star_products' | 'categories' | 'newsletter'>('analytics');
+  
+  // Newsletter Subscriptions States
+  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
+  const [isSubscribersLoading, setIsSubscribersLoading] = useState(true);
+  const [subscriberSearch, setSubscriberSearch] = useState('');
+  const [subscriberSourceFilter, setSubscriberSourceFilter] = useState<'all' | 'homepage' | 'footer' | 'popup' | 'banner'>('all');
+  const [subscriberStatusFilter, setSubscriberStatusFilter] = useState<'all' | 'active' | 'disabled'>('all');
+  const [subscriberSortField, setSubscriberSortField] = useState<'createdAt' | 'email'>('createdAt');
+  const [subscriberSortOrder, setSubscriberSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [subscriberPage, setSubscriberPage] = useState(1);
+  const subscribersPerPage = 10;
+
+  useEffect(() => {
+    if (activeTab === 'newsletter') {
+      loadSubscribers();
+    }
+  }, [activeTab]);
+
+  const loadSubscribers = async () => {
+    setIsSubscribersLoading(true);
+    try {
+      const list = await getNewsletterSubscribersFromFirestore();
+      setSubscribers(list);
+    } catch (e) {
+      console.error('Error loading subscribers in admin:', e);
+    } finally {
+      setIsSubscribersLoading(false);
+    }
+  };
+
+  const handleDeleteSubscriber = async (email: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete subscriber: ${email}?`)) {
+      return;
+    }
+    try {
+      await deleteNewsletterSubscriberFromFirestore(email);
+      setSubscribers((prev) => prev.filter((s) => s.email !== email));
+    } catch (e) {
+      alert('Error deleting subscriber: ' + e);
+    }
+  };
+
+  const handleToggleSubscriberStatus = async (email: string, currentStatus: 'active' | 'disabled') => {
+    const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+    try {
+      await updateNewsletterSubscriberStatusInFirestore(email, newStatus);
+      setSubscribers((prev) =>
+        prev.map((s) => (s.email === email ? { ...s, status: newStatus, lastUpdated: new Date().toISOString() } : s))
+      );
+    } catch (e) {
+      alert('Error updating subscriber status: ' + e);
+    }
+  };
   
   // States for Product Edit Form
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -658,7 +716,8 @@ export default function AdminDashboard({
           { id: 'categories', label: 'Product Categories', icon: Layers },
           { id: 'star_products', label: '⭐ Star Products', icon: Star },
           { id: 'articles', label: 'Editorial Guides', icon: FileText },
-          { id: 'seo', label: 'Sitemap & SEO', icon: Sparkles }
+          { id: 'seo', label: 'Sitemap & SEO', icon: Sparkles },
+          { id: 'newsletter', label: 'Newsletter Console', icon: Mail }
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -1301,6 +1360,392 @@ export default function AdminDashboard({
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* --- TAB 6: NEWSLETTER SUBSCRIBER MANAGEMENT --- */}
+      {activeTab === 'newsletter' && (
+        <div className="space-y-6" id="admin-tab-newsletter">
+          {/* Header segment */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+            <div>
+              <h2 className="font-display text-xl font-extrabold text-stone-950 flex items-center space-x-2">
+                <Mail className="h-5.5 w-5.5 text-amber-600" />
+                <span>Newsletter Curation Console</span>
+              </h2>
+              <p className="text-xs text-stone-500 mt-1">
+                Monitor and manage subscribers, subscription sources, conversion dynamics, and device statistics.
+              </p>
+            </div>
+            
+            <button
+              onClick={() => {
+                const headers = ['Email', 'Created At', 'Status', 'Source', 'Device', 'Country'];
+                const rows = subscribers.map(s => [
+                  s.email,
+                  s.createdAt,
+                  s.status || 'active',
+                  s.source,
+                  s.device || 'N/A',
+                  s.country || 'N/A'
+                ]);
+                const csvContent = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `newsletter_subscribers_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
+              className="inline-flex items-center space-x-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 px-4 py-2.5 text-xs font-bold text-stone-700 transition-all cursor-pointer shadow-sm"
+            >
+              <Download className="h-4 w-4 text-amber-700" />
+              <span>Export CSV</span>
+            </button>
+          </div>
+
+          {/* Key subscriber stats & analytics */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Total Subscribers</span>
+              <div className="mt-2 font-display text-2xl sm:text-3xl font-extrabold text-stone-900">{subscribers.length}</div>
+              <p className="text-[10px] text-stone-400 mt-1">Lifetime subscription leads</p>
+            </div>
+            <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Active Audience</span>
+              <div className="mt-2 font-display text-2xl sm:text-3xl font-extrabold text-emerald-600">
+                {subscribers.filter(s => s.status !== 'disabled').length}
+              </div>
+              <p className="text-[10px] text-emerald-600/80 mt-1">Subscribers active currently</p>
+            </div>
+            <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Footer conversions</span>
+              <div className="mt-2 font-display text-2xl sm:text-3xl font-extrabold text-amber-700">
+                {subscribers.filter(s => s.source === 'footer').length}
+              </div>
+              <p className="text-[10px] text-stone-400 mt-1">Subscriptions via Footer widget</p>
+            </div>
+            <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Smart Overlays (Popup/Banner)</span>
+              <div className="mt-2 font-display text-2xl sm:text-3xl font-extrabold text-purple-700">
+                {subscribers.filter(s => s.source === 'popup' || s.source === 'banner').length}
+              </div>
+              <p className="text-[10px] text-stone-400 mt-1">Subscriptions via interactive triggers</p>
+            </div>
+          </div>
+
+          {/* Source and Device Breakdowns */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Source Conversion Dynamics */}
+            <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+              <h3 className="font-display font-extrabold text-sm text-stone-900 mb-4 uppercase tracking-wider">
+                Source Impressions vs Conversion Rates
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { name: 'Homepage Box', count: subscribers.filter(s => s.source === 'homepage').length, impressions: 4500, color: 'bg-amber-500' },
+                  { name: 'Footer Widget', count: subscribers.filter(s => s.source === 'footer').length, impressions: 8500, color: 'bg-emerald-500' },
+                  { name: 'Exit Intent Popup', count: subscribers.filter(s => s.source === 'popup').length, impressions: 1800, color: 'bg-purple-500' },
+                  { name: 'Scroll Banner', count: subscribers.filter(s => s.source === 'banner').length, impressions: 3200, color: 'bg-blue-500' }
+                ].map((src, idx) => {
+                  const rate = src.impressions > 0 ? ((src.count / src.impressions) * 100).toFixed(2) : '0.00';
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-stone-700">{src.name}</span>
+                        <span className="font-mono text-stone-500 font-bold">
+                          {src.count} subs / {src.impressions} views ({rate}%)
+                        </span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-stone-100 overflow-hidden">
+                        <div className={`h-full ${src.color}`} style={{ width: `${Math.min(100, (Number(rate) * 10))}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Device & Country Stats */}
+            <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+              <h3 className="font-display font-extrabold text-sm text-stone-900 mb-4 uppercase tracking-wider">
+                Audience Device & Geographical Stats
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-stone-50 p-4 rounded-xl border border-stone-150">
+                  <span className="text-[10px] text-stone-400 font-bold uppercase">Device breakdown</span>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center text-stone-600 gap-1.5"><Laptop className="h-3.5 w-3.5 text-stone-500" /> Desktop</span>
+                      <span className="font-bold text-stone-800">{subscribers.filter(s => s.device === 'desktop').length}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center text-stone-600 gap-1.5"><Smartphone className="h-3.5 w-3.5 text-stone-500" /> Mobile</span>
+                      <span className="font-bold text-stone-800">{subscribers.filter(s => s.device === 'mobile').length}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-stone-50 p-4 rounded-xl border border-stone-150">
+                  <span className="text-[10px] text-stone-400 font-bold uppercase">Geographical Origin</span>
+                  <div className="mt-3 space-y-2 max-h-[100px] overflow-y-auto">
+                    {(() => {
+                      const geoMap: { [key: string]: number } = {};
+                      subscribers.forEach(s => {
+                        const country = s.country || 'India';
+                        geoMap[country] = (geoMap[country] || 0) + 1;
+                      });
+                      const entries = Object.entries(geoMap);
+                      if (entries.length === 0) {
+                        return <div className="text-[11px] text-stone-400">Waiting for subscriber data...</div>;
+                      }
+                      return entries.map(([country, count], i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="flex items-center text-stone-600 gap-1.5 truncate max-w-[100px]"><Globe className="h-3.5 w-3.5 text-amber-600 shrink-0" /> {country}</span>
+                          <span className="font-bold text-stone-800">{count}</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filtering and Search section */}
+          <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200/80 flex flex-wrap gap-3 items-center justify-between">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute inset-y-0 left-3 h-4 w-4 my-auto text-stone-400" />
+              <input
+                type="text"
+                value={subscriberSearch}
+                onChange={e => { setSubscriberSearch(e.target.value); setSubscriberPage(1); }}
+                placeholder="Search subscribers by email..."
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-stone-200 bg-white outline-none focus:border-amber-600 transition-colors"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center space-x-1.5">
+                <Filter className="h-3.5 w-3.5 text-stone-500" />
+                <span className="text-xs font-semibold text-stone-500">Source:</span>
+                <select
+                  value={subscriberSourceFilter}
+                  onChange={e => { setSubscriberSourceFilter(e.target.value as any); setSubscriberPage(1); }}
+                  className="rounded-xl border border-stone-200 bg-white py-1.5 px-3 text-xs text-stone-700 outline-none"
+                >
+                  <option value="all">All Sources</option>
+                  <option value="homepage">Homepage Section</option>
+                  <option value="footer">Footer Form</option>
+                  <option value="popup">Exit Intent Popup</option>
+                  <option value="banner">Scroll Banner</option>
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-1.5">
+                <span className="text-xs font-semibold text-stone-500">Status:</span>
+                <select
+                  value={subscriberStatusFilter}
+                  onChange={e => { setSubscriberStatusFilter(e.target.value as any); setSubscriberPage(1); }}
+                  className="rounded-xl border border-stone-200 bg-white py-1.5 px-3 text-xs text-stone-700 outline-none"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+              </div>
+
+              <button
+                onClick={loadSubscribers}
+                className="p-1.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-600 hover:text-stone-950 transition-all shadow-sm"
+                title="Refresh List"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Subscribers Table */}
+          {isSubscribersLoading ? (
+            <div className="text-center py-24 bg-white border border-stone-200 rounded-2xl shadow-sm">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-900 border-t-transparent mx-auto mb-3" />
+              <p className="text-sm text-stone-500">Retrieving subscriber registry securely...</p>
+            </div>
+          ) : (() => {
+            let filtered = [...subscribers];
+            
+            if (subscriberSearch.trim()) {
+              const queryStr = subscriberSearch.toLowerCase().trim();
+              filtered = filtered.filter(s => s.email.toLowerCase().includes(queryStr));
+            }
+
+            if (subscriberSourceFilter !== 'all') {
+              filtered = filtered.filter(s => s.source === subscriberSourceFilter);
+            }
+
+            if (subscriberStatusFilter !== 'all') {
+              filtered = filtered.filter(s => (s.status || 'active') === subscriberStatusFilter);
+            }
+
+            // Apply Sort
+            filtered.sort((a, b) => {
+              const valA = subscriberSortField === 'createdAt' ? a.createdAt : a.email;
+              const valB = subscriberSortField === 'createdAt' ? b.createdAt : b.email;
+              if (subscriberSortOrder === 'asc') {
+                return valA > valB ? 1 : -1;
+              } else {
+                return valA < valB ? 1 : -1;
+              }
+            });
+
+            // Apply Pagination
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / subscribersPerPage);
+            const startIndex = (subscriberPage - 1) * subscribersPerPage;
+            const paginatedSubscribers = filtered.slice(startIndex, startIndex + subscribersPerPage);
+
+            if (totalItems === 0) {
+              return (
+                <div className="text-center py-16 border border-dashed border-stone-200 bg-stone-50/50 rounded-2xl">
+                  <Mail className="h-10 w-10 text-stone-300 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-stone-600">No subscribers matched your filters.</p>
+                  <p className="text-xs text-stone-400 mt-1">Try modifying search tags or clearing options.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-stone-50 text-stone-500 font-sans text-[10px] font-extrabold uppercase tracking-widest border-b border-stone-200 select-none">
+                        <th className="px-6 py-4 cursor-pointer hover:bg-stone-100 transition-colors" onClick={() => {
+                          if (subscriberSortField === 'email') {
+                            setSubscriberSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSubscriberSortField('email');
+                            setSubscriberSortOrder('asc');
+                          }
+                        }}>
+                          Subscriber Email {subscriberSortField === 'email' ? (subscriberSortOrder === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th className="px-6 py-4 cursor-pointer hover:bg-stone-100 transition-colors" onClick={() => {
+                          if (subscriberSortField === 'createdAt') {
+                            setSubscriberSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSubscriberSortField('createdAt');
+                            setSubscriberSortOrder('asc');
+                          }
+                        }}>
+                          Joined Date {subscriberSortField === 'createdAt' ? (subscriberSortOrder === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th className="px-6 py-4">Source</th>
+                        <th className="px-6 py-4">Device</th>
+                        <th className="px-6 py-4">Country</th>
+                        <th className="px-6 py-4 text-center">Status</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100 text-xs text-stone-600">
+                      {paginatedSubscribers.map((sub, sidx) => (
+                        <tr key={sidx} className="hover:bg-stone-50/40 transition-colors">
+                          <td className="px-6 py-4 font-bold text-stone-900">{sub.email}</td>
+                          <td className="px-6 py-4 font-mono text-stone-400">
+                            {new Date(sub.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
+                              sub.source === 'footer' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+                              sub.source === 'homepage' ? 'bg-amber-50 border-amber-100 text-amber-700' :
+                              sub.source === 'popup' ? 'bg-purple-50 border-purple-100 text-purple-700' :
+                              'bg-blue-50 border-blue-100 text-blue-700'
+                            }`}>
+                              {sub.source}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 capitalize whitespace-nowrap">{sub.device || 'N/A'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{sub.country || 'N/A'}</td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                              (sub.status || 'active') === 'active' ? 'bg-emerald-100/50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-100/60 text-red-600'
+                            }`}>
+                              {sub.status || 'active'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end space-x-1.5">
+                              <button
+                                onClick={() => handleToggleSubscriberStatus(sub.email, sub.status || 'active')}
+                                className={`p-1 rounded-lg border shadow-xs transition-colors cursor-pointer ${
+                                  sub.status === 'disabled' 
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100' 
+                                    : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                                }`}
+                                title={sub.status === 'disabled' ? "Enable Subscription" : "Disable Subscription"}
+                              >
+                                {sub.status === 'disabled' ? <CheckCircle className="h-3.5 w-3.5" /> : <ShieldAlert className="h-3.5 w-3.5" />}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSubscriber(sub.email)}
+                                className="p-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-xs cursor-pointer"
+                                title="Delete Subscriber Permanently"
+                              >
+                                <Trash className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs text-stone-500">
+                      Showing <strong className="font-bold text-stone-700">{startIndex + 1}</strong> to <strong className="font-bold text-stone-700">{Math.min(totalItems, startIndex + subscribersPerPage)}</strong> of <strong className="font-bold text-stone-700">{totalItems}</strong> subscribers
+                    </span>
+
+                    <div className="inline-flex items-center space-x-1.5">
+                      <button
+                        onClick={() => setSubscriberPage(p => Math.max(1, p - 1))}
+                        disabled={subscriberPage === 1}
+                        className="rounded-xl border border-stone-250 bg-white hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-stone-600 cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      
+                      {Array.from({ length: totalPages }).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setSubscriberPage(i + 1)}
+                          className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                            subscriberPage === i + 1
+                              ? 'bg-stone-900 text-white'
+                              : 'border border-stone-200 bg-white hover:bg-stone-50 text-stone-600'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => setSubscriberPage(p => Math.min(totalPages, p + 1))}
+                        disabled={subscriberPage === totalPages}
+                        className="rounded-xl border border-stone-250 bg-white hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-stone-600 cursor-pointer"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 

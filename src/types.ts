@@ -196,3 +196,14 @@ export interface Comparison {
   timestamp: string;
 }
 
+export interface NewsletterSubscriber {
+  email: string;
+  createdAt: string;
+  status: 'active' | 'disabled';
+  source: 'homepage' | 'footer' | 'popup' | 'banner';
+  device: 'desktop' | 'mobile';
+  country: string;
+  lastUpdated: string;
+}
+
+

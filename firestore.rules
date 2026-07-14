@@ -55,6 +55,14 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // Newsletter Subscribers: anyone can subscribe (create) and check their own status (get)
+    // but only admin can list, update or delete subscriber records.
+    match /newsletterSubscribers/{email} {
+      allow get: if true;
+      allow create: if true;
+      allow list, update, delete: if isAdmin();
+    }
+
     // Marketing Campaigns: public read, write restricted to admin
     match /marketing_campaigns/{campaignId} {
       allow read: if true;
