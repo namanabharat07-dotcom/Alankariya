@@ -184,3 +184,15 @@ export interface UserProfile {
   lastLogin?: string;
   updatedAt?: string;
 }
+
+export interface Comparison {
+  id: string;
+  userId?: string;
+  comparedProductIds: string[];
+  productCategory: string;
+  userPriorities: Record<string, number>;
+  aiMatchScores: Record<string, number>;
+  aiRecommendation: string;
+  timestamp: string;
+}
+

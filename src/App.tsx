@@ -31,6 +31,10 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProductCard from './components/ProductCard';
 import ProductComparison from './components/ProductComparison';
+import ComparisonHistory from './components/ComparisonHistory';
+import WatchlistSection from './components/WatchlistSection';
+import PriceTrackerSection from './components/PriceTrackerSection';
+import CategoriesSection from './components/CategoriesSection';
 import FAQSection from './components/FAQSection';
 import ProductDetail from './components/ProductDetail';
 import BlogSection from './components/BlogSection';
@@ -41,7 +45,7 @@ import AIFinder from './components/AIFinder';
 import PremiumWelcome from './components/PremiumWelcome';
 import { 
   Sparkles, Award, ShieldCheck, ShoppingBag, ArrowRight, Star, 
-  Filter, Check, Info, Mail, Send, MapPin, MessageSquare, HelpCircle, Layers, Flame, ShoppingCart, CloudLightning
+  Filter, Check, Info, Mail, Send, MapPin, MessageSquare, HelpCircle, Layers, Flame, ShoppingCart, CloudLightning, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -103,6 +107,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalSignUp, setAuthModalSignUp] = useState(false);
   const [pendingClickAction, setPendingClickAction] = useState<{ productId: string; network: string; url: string } | null>(null);
 
   const isAdmin = currentUser?.email?.toLowerCase() === 'namanabharat07@gmail.com';
@@ -140,6 +145,8 @@ export default function App() {
     const verifyEmailParam = params.get('verify_email');
     const tokenParam = params.get('token');
     const unsubscribeParam = params.get('unsubscribe');
+    const pageParam = params.get('page');
+    const idsParam = params.get('ids');
 
     if (verifyEmailParam && tokenParam) {
       import('./lib/marketing').then(async (m) => {
@@ -167,6 +174,10 @@ export default function App() {
         });
         window.history.replaceState({}, document.title, window.location.pathname);
       });
+    } else if (pageParam === 'compare' && idsParam) {
+      const ids = idsParam.split(',');
+      setCompareList(ids);
+      setCurrentPage('compare');
     }
   }, []);
 
@@ -911,15 +922,38 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
         isSyncing={isDbSyncing}
         currentUser={currentUser}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAuth={(signUp?: boolean) => {
+          setAuthModalSignUp(!!signUp);
+          setIsAuthModalOpen(true);
+        }}
         onSignOut={handleSignOut}
         onReplayWelcome={handleReplayWelcome}
+        products={data.products}
       />
 
       {/* Main Content Sections viewport */}
       <main className="flex-grow">
         <AnimatePresence mode="wait">
           
+          {/* ==========================================================
+              CATEGORIES DIRECTORY VIEW
+              ========================================================== */}
+          {currentPage === 'categories' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+              className="pb-16"
+              id="categories-page-view"
+            >
+              <CategoriesSection
+                onSelectCategory={(category) => setSelectedCategory(category)}
+                onNavigate={handleNavigate}
+              />
+            </motion.div>
+          )}
+
           {/* ==========================================================
               HOMEPAGE
               ========================================================== */}
@@ -932,10 +966,7 @@ export default function App() {
               className="space-y-16 pb-16"
               id="home-page-view"
             >
-              {/* Star Products of the Day Carousel */}
-              <StarProductsCarousel starProducts={starProducts} onStarClick={handleStarProductClick} />
-
-              {/* Premium Hero Section */}
+              {/* 1. Premium Hero Section at the absolute top */}
               <section className="relative overflow-hidden bg-[#1c1917] py-20 text-white" id="home-hero">
                 {/* Decorative glowing back-blobs with elegant amber tones */}
                 <div className="absolute top-0 left-1/4 h-80 w-80 rounded-full bg-amber-500/5 blur-3xl animate-pulse" />
@@ -947,12 +978,12 @@ export default function App() {
                     <span>Next-Gen Shopping</span>
                   </span>
                   
-                  <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#faf9f6] leading-tight max-w-3xl mx-auto">
+                  <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-[#faf9f6] leading-tight max-w-3xl mx-auto">
                     Buy Smarter with <span className="bg-gradient-to-r from-amber-200 via-amber-350 to-amber-100 bg-clip-text text-transparent">AI</span>
                   </h1>
                   
-                  <p className="text-sm sm:text-base md:text-lg text-stone-300 max-w-2xl mx-auto leading-relaxed font-light">
-                    Find the perfect product based on your needs, compare products intelligently, and buy with confidence.
+                  <p className="text-sm sm:text-base md:text-lg text-stone-350 max-w-2xl mx-auto leading-relaxed font-light">
+                    An independent hardware analysis collective. Describe your requirements in plain language, find your budget match, or compare side-by-side with 100% evidence-based audits.
                   </p>
 
                   {/* PREMIUM AI SEARCH BAR */}
@@ -1038,7 +1069,154 @@ export default function App() {
                 </div>
               </section>
 
-              {/* Why Choose Alankariya Banner */}
+              {/* 2. Core Features Section: Guides users to AI Finder, Smart Comparison, Price Tracker */}
+              <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" id="home-core-features">
+                <div className="text-center max-w-xl mx-auto mb-10">
+                  <span className="font-mono text-[9px] tracking-widest text-amber-700 uppercase font-extrabold bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/30">
+                    AI Shopping Engine
+                  </span>
+                  <h2 className="font-display text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-3">
+                    Explore Our Core Capabilities
+                  </h2>
+                  <p className="text-xs sm:text-sm text-stone-500 mt-2 font-light leading-relaxed">
+                    Alankapriya replaces standard retail noise with intelligent, unbiased matching and beautiful physical spec comparisons.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Card A: AI Product Finder */}
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    className="group flex flex-col justify-between rounded-3xl border border-stone-200/80 bg-white p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all"
+                    id="feature-card-finder"
+                  >
+                    <div className="space-y-4">
+                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-800 border border-amber-200/40">
+                        <Sparkles className="h-5 w-5 fill-amber-50" />
+                      </div>
+                      <h3 className="font-display font-bold text-lg text-stone-950 tracking-tight">
+                        AI Product Finder
+                      </h3>
+                      <p className="text-stone-500 text-xs sm:text-sm font-light leading-relaxed">
+                        Say goodbye to endless filtering. Simply write what you need (e.g. "a water-resistant running watch with long battery life under ₹15k") and get immediate suggestions.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => { setAiFinderPreQuery(''); setCurrentPage('ai-finder'); }}
+                      className="mt-6 inline-flex items-center space-x-1.5 font-sans text-xs font-bold uppercase tracking-wider text-amber-800 hover:text-amber-950 transition-colors cursor-pointer text-left self-start"
+                    >
+                      <span>Ask AI Finder</span>
+                      <span>→</span>
+                    </button>
+                  </motion.div>
+
+                  {/* Card B: Smart Comparison */}
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    className="group flex flex-col justify-between rounded-3xl border border-stone-200/80 bg-white p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all"
+                    id="feature-card-compare"
+                  >
+                    <div className="space-y-4">
+                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-800 border border-amber-200/40">
+                        <ArrowRight className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-display font-bold text-lg text-stone-950 tracking-tight">
+                        Smart Comparison
+                  </h3>
+                      <p className="text-stone-500 text-xs sm:text-sm font-light leading-relaxed">
+                        Compare hardware specifications, pro/con audits, and neutral suitability ratings side-by-side. The decision engine recommends suitable users instead of universal winners.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage('compare')}
+                      className="mt-6 inline-flex items-center space-x-1.5 font-sans text-xs font-bold uppercase tracking-wider text-amber-800 hover:text-amber-950 transition-colors cursor-pointer text-left self-start"
+                    >
+                      <span>Compare Products</span>
+                      <span>→</span>
+                    </button>
+                  </motion.div>
+
+                  {/* Card C: Price Tracker */}
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    className="group flex flex-col justify-between rounded-3xl border border-stone-200/80 bg-white p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all"
+                    id="feature-card-tracker"
+                  >
+                    <div className="space-y-4">
+                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-800 border border-amber-200/40">
+                        <Clock className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-display font-bold text-lg text-stone-950 tracking-tight">
+                        Aesthetic Price Tracker
+                      </h3>
+                      <p className="text-stone-500 text-xs sm:text-sm font-light leading-relaxed">
+                        Visualize complete history charts of price movements. Log in to configure custom price drop target notifications and save money systematically.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage('price-tracker')}
+                      className="mt-6 inline-flex items-center space-x-1.5 font-sans text-xs font-bold uppercase tracking-wider text-amber-800 hover:text-amber-950 transition-colors cursor-pointer text-left self-start"
+                    >
+                      <span>Track Prices</span>
+                      <span>→</span>
+                    </button>
+                  </motion.div>
+                </div>
+              </section>
+
+              {/* 3. Star Products of the Day Carousel */}
+              <div id="home-star-products-carousel-wrap">
+                <StarProductsCarousel starProducts={starProducts} onStarClick={handleStarProductClick} />
+              </div>
+
+              {/* 4. Beautiful Categories Preview segment */}
+              <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" id="home-categories-preview">
+                <div className="rounded-3xl border border-stone-200 bg-white p-6 sm:p-10 shadow-sm relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-stone-100 gap-4">
+                    <div>
+                      <span className="font-mono text-[9px] tracking-widest text-amber-800 bg-amber-150/40 px-2.5 py-0.5 rounded-full border border-amber-200/20 uppercase font-bold">
+                        Browse Directories
+                      </span>
+                      <h3 className="font-display font-black text-xl sm:text-2xl text-stone-950 tracking-tight mt-1.5">
+                        Shop Curated Collections
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage('categories')}
+                      className="rounded-xl border border-stone-200 bg-[#faf9f6] px-4 py-2 text-xs font-bold uppercase tracking-wider text-amber-900 hover:bg-[#f5f3ef] transition-colors cursor-pointer shrink-0"
+                    >
+                      View All 10 Categories →
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
+                    {[
+                      { name: 'Electronics', img: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=400&q=80', desc: 'Expertly vetted smartphones, laptops, audio gear, and wearables.' },
+                      { name: "Men's Fashion", img: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=400&q=80', desc: 'Premium athletic wear, elegant formals, and casuals.' },
+                      { name: "Women's Fashion", img: 'https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=400&q=80', desc: 'Designer casuals, sarees, statement accessories, and jewelry.' },
+                      { name: 'Home & Kitchen', img: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=400&q=80', desc: 'Minimalist organizers, cookware, and smart home appliances.' }
+                    ].map(cat => (
+                      <div
+                        key={cat.name}
+                        onClick={() => {
+                          setSelectedCategory(cat.name);
+                          setCurrentPage('home');
+                        }}
+                        className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer shadow-sm border border-stone-150 bg-stone-100 flex flex-col justify-end text-left"
+                      >
+                        <img src={cat.img} alt={cat.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/45 to-transparent opacity-85" />
+                        <div className="relative z-10 p-5 space-y-1.5">
+                          <h4 className="font-display font-extrabold text-base text-white tracking-tight">{cat.name}</h4>
+                          <p className="text-stone-300 text-[10px] font-light leading-relaxed line-clamp-2">{cat.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              {/* 5. Why Choose Alankapriya Trust Banner */}
               <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 shadow-sm" id="home-why-us">
                 <div className="bg-[#fafaf6] border border-amber-100/60 rounded-3xl p-8 sm:p-10 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-amber-50 rounded-full blur-3xl -z-10" />
@@ -1656,6 +1834,71 @@ export default function App() {
                 onClearCompare={handleClearCompare}
                 onNavigateToProduct={(id) => handleNavigate('product', { id })}
                 onAffiliateClick={handleAffiliateClick}
+                onNavigate={handleNavigate}
+                currentUser={currentUser}
+              />
+            </motion.div>
+          )}
+
+          {/* ==========================================================
+              WATCHLIST VIEW
+              ========================================================== */}
+          {currentPage === 'watchlist' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="pb-16"
+            >
+              <WatchlistSection
+                currentUser={currentUser}
+                allProducts={data.products}
+                onOpenAuth={() => setIsAuthModalOpen(true)}
+                onToggleCompare={handleToggleCompare}
+                compareList={compareList}
+                onNavigate={handleNavigate}
+              />
+            </motion.div>
+          )}
+
+          {/* ==========================================================
+              PRICE TRACKER VIEW
+              ========================================================== */}
+          {currentPage === 'price-tracker' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="pb-16"
+            >
+              <PriceTrackerSection
+                currentUser={currentUser}
+                allProducts={data.products}
+                onOpenAuth={() => setIsAuthModalOpen(true)}
+                onNavigate={handleNavigate}
+              />
+            </motion.div>
+          )}
+
+          {/* ==========================================================
+              COMPARISON HISTORY VIEW
+              ========================================================== */}
+          {currentPage === 'history' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="pb-16"
+            >
+              <ComparisonHistory
+                currentUser={currentUser}
+                allProducts={data.products}
+                onOpenAuth={() => setIsAuthModalOpen(true)}
+                onReopenComparison={(productIds) => {
+                  setCompareList(productIds);
+                  handleNavigate('compare');
+                }}
+                onNavigate={handleNavigate}
               />
             </motion.div>
           )}
@@ -1984,6 +2227,7 @@ export default function App() {
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
         onSuccess={handleAuthSuccess}
+        initialIsSignUp={authModalSignUp}
       />
 
       {/* Shopping Bag Drawer (Amazon/Myntra style) */}

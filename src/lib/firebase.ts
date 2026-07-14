@@ -10,7 +10,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory, WatchlistItem, PriceHistoryItem, UserProfile } from '../types';
+import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory, WatchlistItem, PriceHistoryItem, UserProfile, Comparison } from '../types';
 
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -598,3 +598,53 @@ export async function getUserProfileFromFirestore(uid: string): Promise<UserProf
     return null;
   }
 }
+
+/**
+ * Fetch all comparison records from Firestore (optionally filtered by userId)
+ */
+export async function getComparisonsFromFirestore(userId?: string): Promise<Comparison[]> {
+  try {
+    const colRef = collection(db, 'comparisons');
+    const snapshot = await getDocs(colRef);
+    const comparisons: Comparison[] = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data() as Comparison;
+      if (!userId || data.userId === userId) {
+        comparisons.push({ id: doc.id, ...data });
+      }
+    });
+    // Sort by timestamp descending
+    comparisons.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return comparisons;
+  } catch (error) {
+    console.error('Error fetching comparisons from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save a comparison record to Firestore
+ */
+export async function saveComparisonToFirestore(item: Comparison): Promise<void> {
+  try {
+    const docRef = doc(db, 'comparisons', item.id);
+    await setDoc(docRef, cleanData(item));
+  } catch (error) {
+    console.error(`Error saving comparison ${item.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a comparison record from Firestore
+ */
+export async function deleteComparisonFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, 'comparisons', id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting comparison ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+

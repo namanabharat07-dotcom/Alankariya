@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Menu, X, ShieldAlert, Layers, Headphones, FileText, ArrowLeftRight, HelpCircle, Cloud, LogIn, LogOut, User, ShoppingCart, Sparkles } from 'lucide-react';
+import { 
+  Search, Menu, X, ShieldAlert, Layers, Headphones, FileText, ArrowLeftRight, 
+  HelpCircle, LogIn, LogOut, User, ShoppingCart, Sparkles, Clock, Bookmark, Settings, ChevronDown 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
 import { Product } from '../types';
 
 interface NavbarProps {
@@ -14,7 +16,7 @@ interface NavbarProps {
   onOpenCart?: () => void;
   isSyncing?: boolean;
   currentUser?: any;
-  onOpenAuth?: () => void;
+  onOpenAuth?: (signUp?: boolean) => void;
   onSignOut?: () => void;
   products?: Product[];
   onReplayWelcome?: () => void;
@@ -36,7 +38,7 @@ export default function Navbar({
   onReplayWelcome
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const isAdmin = currentUser?.email?.toLowerCase() === 'namanabharat07@gmail.com';
@@ -54,11 +56,12 @@ export default function Navbar({
 
   const navItems = [
     { name: 'Home', page: 'home', icon: Layers },
-    { name: 'AI Finder', page: 'ai-finder', icon: Sparkles },
+    { name: 'Categories', page: 'categories', icon: Search },
     { name: 'Compare', page: 'compare', icon: ArrowLeftRight, badge: compareCount > 0 ? compareCount : undefined },
-    { name: 'Guides', page: 'guides_list', icon: FileText },
-    { name: 'Blog', page: 'blogs_list', icon: FileText },
-    { name: 'FAQs', page: 'faqs', icon: HelpCircle }
+    { name: 'Price Tracker', page: 'price-tracker', icon: Clock },
+    { name: 'Watchlist', page: 'watchlist', icon: Bookmark },
+    { name: 'About', page: 'about', icon: HelpCircle },
+    { name: 'Contact', page: 'contact', icon: Headphones }
   ];
 
   return (
@@ -67,7 +70,7 @@ export default function Navbar({
         
         {/* Brand Logo */}
         <div 
-          className="flex cursor-pointer items-center space-x-2.5" 
+          className="flex cursor-pointer items-center space-x-2.5 shrink-0" 
           onClick={() => { onNavigate('home'); setMobileMenuOpen(false); }}
           id="nav-logo"
         >
@@ -81,27 +84,25 @@ export default function Navbar({
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center space-x-1" id="desktop-nav">
+        <nav className="hidden xl:flex items-center space-x-1" id="desktop-nav">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPage === item.page || 
-                             (item.page === 'guides_list' && currentPage === 'guide') ||
-                             (item.page === 'blogs_list' && currentPage === 'blog');
+            const isActive = currentPage === item.page;
             return (
               <button
                 key={item.name}
                 id={`nav-item-${item.page}`}
                 onClick={() => onNavigate(item.page)}
-                className={`group relative flex items-center space-x-1.5 px-3.5 py-2 rounded-lg font-sans text-xs uppercase tracking-wider font-medium transition-colors duration-200 ${
+                className={`group relative flex items-center space-x-1.5 px-3 py-2 rounded-lg font-sans text-xs uppercase tracking-wider font-medium transition-colors duration-200 ${
                   isActive 
-                    ? 'text-amber-850 bg-amber-50/60' 
+                    ? 'text-[#1c1917] bg-amber-50/60' 
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 <Icon className={`h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-105 ${isActive ? 'text-amber-700' : 'text-slate-400 group-hover:text-slate-500'}`} />
                 <span>{item.name}</span>
                 {item.badge !== undefined && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white animate-pulse">
                     {item.badge}
                   </span>
                 )}
@@ -117,13 +118,13 @@ export default function Navbar({
           })}
         </nav>
 
-        {/* Global Search and Admin CTA */}
-        <div className="hidden md:flex items-center space-x-4" id="nav-right-actions">
+        {/* Global Search, Actions, & Auth */}
+        <div className="hidden md:flex items-center space-x-3.5" id="nav-right-actions">
           {/* Integrated Search Input */}
           <div className={`relative flex items-center rounded-xl border bg-white transition-all duration-300 ${
             isSearchFocused 
-              ? 'w-72 border-amber-600 ring-1 ring-amber-100' 
-              : 'w-48 border-stone-200 hover:border-stone-350'
+              ? 'w-64 border-amber-600 ring-1 ring-amber-100' 
+              : 'w-40 lg:w-48 border-stone-200 hover:border-stone-300'
           }`} id="global-search-container">
             <span className="pl-3 text-slate-400">
               <Search className="h-4 w-4" />
@@ -140,7 +141,7 @@ export default function Navbar({
               }}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-              placeholder="Search curation..."
+              placeholder="Search..."
               className="w-full bg-transparent py-1.5 pl-2 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 font-light"
             />
             {searchQuery && (
@@ -183,7 +184,7 @@ export default function Navbar({
                           <p className="text-xs font-bold text-slate-900 truncate">{p.title}</p>
                           <div className="flex items-center justify-between text-[10px] text-slate-400">
                             <span>{p.brand}</span>
-                            <span className="font-bold text-amber-700 font-mono">${p.price}</span>
+                            <span className="font-bold text-amber-700 font-mono">₹{p.price.toLocaleString()}</span>
                           </div>
                         </div>
                       </div>
@@ -203,14 +204,14 @@ export default function Navbar({
             <button
               id="nav-btn-admin"
               onClick={() => onNavigate('admin')}
-              className={`flex items-center space-x-1.5 rounded-xl px-4 py-2 text-xs uppercase tracking-wider font-semibold transition-all duration-200 shadow-sm ${
+              className={`flex items-center space-x-1.5 rounded-xl px-3 py-2 text-xs uppercase tracking-wider font-semibold transition-all duration-200 shadow-sm ${
                 currentPage === 'admin'
                   ? 'bg-slate-900 text-white shadow-slate-900/10'
                   : 'bg-white border border-stone-200 text-slate-700 hover:bg-stone-50'
               }`}
             >
-              <ShieldAlert className="h-3.5 w-3.5 text-amber-700 animate-pulse" />
-              <span>Admin Control</span>
+              <ShieldAlert className="h-3.5 w-3.5 text-amber-750 animate-pulse" />
+              <span>Admin</span>
             </button>
           )}
 
@@ -226,7 +227,7 @@ export default function Navbar({
             </button>
           )}
 
-          {/* Shopping Bag Button (Myntra/Flipkart style) */}
+          {/* Shopping Bag Button */}
           <button
             onClick={onOpenCart}
             id="nav-btn-cart"
@@ -241,65 +242,112 @@ export default function Navbar({
             )}
           </button>
 
-          {/* User Auth Section */}
-          {currentUser ? (
-            <div className="flex items-center space-x-2 border-l border-stone-200 pl-4 animate-fade-in" id="nav-user-controls">
-              <div className="flex flex-col text-right">
-                <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Patron</span>
-                <span className="text-xs font-bold text-slate-700 max-w-[120px] truncate" title={currentUser.email}>
-                  {currentUser.email.split('@')[0]}
-                </span>
+          {/* User Auth Section - Premium Sign In & Sign Up and Profile avatar menu */}
+          <div className="flex items-center space-x-2 pl-2 border-l border-stone-200/60" id="nav-auth-wrapper">
+            {currentUser ? (
+              <div className="relative" id="nav-user-dropdown-container">
+                <button
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  className="flex items-center space-x-2 rounded-full border border-stone-200 bg-white p-1 pr-3 hover:bg-stone-50 transition-all cursor-pointer"
+                  id="nav-user-profile-btn"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-800 text-white font-bold text-xs shadow-inner">
+                    {currentUser.email[0].toUpperCase()}
+                  </div>
+                  <span className="text-xs font-semibold text-slate-850 max-w-[90px] truncate">
+                    {currentUser.email.split('@')[0]}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                </button>
+
+                <AnimatePresence>
+                  {profileMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 mt-2 w-56 rounded-2xl border border-stone-200 bg-white p-2 shadow-xl z-50 text-left"
+                        id="nav-user-profile-dropdown"
+                      >
+                        <div className="px-3 py-2 border-b border-stone-100 mb-1">
+                          <p className="text-[10px] font-mono font-bold text-stone-450 uppercase tracking-wider">Patron Account</p>
+                          <p className="text-xs font-bold text-slate-800 truncate" title={currentUser.email}>{currentUser.email}</p>
+                        </div>
+                        <button
+                          onClick={() => { onNavigate('watchlist'); setProfileMenuOpen(false); }}
+                          className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[#faf9f6] transition-colors text-left"
+                        >
+                          <User className="h-3.5 w-3.5 text-amber-700" />
+                          <span>My Profile</span>
+                        </button>
+                        <button
+                          onClick={() => { onNavigate('watchlist'); setProfileMenuOpen(false); }}
+                          className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[#faf9f6] transition-colors text-left"
+                        >
+                          <Bookmark className="h-3.5 w-3.5 text-amber-700 animate-pulse" />
+                          <span>Watchlist</span>
+                        </button>
+                        <button
+                          onClick={() => { onNavigate('history'); setProfileMenuOpen(false); }}
+                          className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[#faf9f6] transition-colors text-left"
+                        >
+                          <Clock className="h-3.5 w-3.5 text-amber-700" />
+                          <span>Comparison History</span>
+                        </button>
+                        <button
+                          onClick={() => { onNavigate('watchlist'); setProfileMenuOpen(false); }}
+                          className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[#faf9f6] transition-colors text-left"
+                        >
+                          <ShoppingCart className="h-3.5 w-3.5 text-amber-700" />
+                          <span>Saved Products</span>
+                        </button>
+                        <button
+                          onClick={() => { alert('Premium Settings interface coming soon!'); setProfileMenuOpen(false); }}
+                          className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[#faf9f6] transition-colors text-left"
+                        >
+                          <Settings className="h-3.5 w-3.5 text-stone-400" />
+                          <span>Settings</span>
+                        </button>
+                        <div className="border-t border-stone-100 mt-1 pt-1">
+                          <button
+                            onClick={() => { onSignOut(); setProfileMenuOpen(false); }}
+                            className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors text-left"
+                          >
+                            <LogOut className="h-3.5 w-3.5" />
+                            <span>Logout</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
-              <button
-                onClick={onSignOut}
-                id="nav-btn-signout"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-stone-200 bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200 cursor-pointer shadow-sm"
-                title="Sign Out"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onOpenAuth}
-              id="nav-btn-signin"
-              className="flex items-center space-x-1.5 rounded-xl bg-amber-750 hover:bg-amber-800 px-4 py-2 text-xs uppercase tracking-wider font-semibold text-white shadow-sm transition-all duration-200 cursor-pointer"
-            >
-              <LogIn className="h-3.5 w-3.5" />
-              <span>Sign In</span>
-            </button>
-          )}
+            ) : (
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={() => onOpenAuth(false)}
+                  id="nav-btn-signin"
+                  className="rounded-xl border border-stone-300 bg-white hover:bg-stone-50 px-3.5 py-1.5 text-xs uppercase tracking-wider font-bold text-slate-800 transition-all cursor-pointer shadow-sm"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => onOpenAuth(true)}
+                  id="nav-btn-signup"
+                  className="rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-750 hover:to-amber-950 px-3.5 py-1.5 text-xs uppercase tracking-wider font-bold text-white transition-all scale-100 hover:scale-[1.02] cursor-pointer shadow-md"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Mobile Navigation Controls */}
-        <div className="flex md:hidden items-center space-x-3" id="mobile-nav-actions">
-          {currentPage === 'home' && (
-            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-stone-100 text-slate-600">
-              <Search className="h-4 w-4" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder=""
-                className="absolute inset-0 w-full opacity-0 cursor-pointer"
-              />
-            </div>
-          )}
-
-          {/* Admin Button on Mobile Header */}
-          {isAdmin && (
-            <button
-              id="nav-btn-admin-mobile"
-              onClick={() => onNavigate('admin')}
-              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 ${
-                currentPage === 'admin' ? 'bg-slate-900 text-white' : 'bg-stone-100 text-slate-700'
-              }`}
-            >
-              <ShieldAlert className="h-4 w-4 text-amber-750" />
-            </button>
-          )}
-
-          {/* Mobile Shopping Bag Button */}
+        {/* Mobile Navigation Drawer Trigger */}
+        <div className="flex xl:hidden items-center space-x-3.5" id="mobile-nav-actions">
+          {/* Mobile Shopping Bag */}
           <button
             onClick={onOpenCart}
             id="nav-btn-cart-mobile"
@@ -308,7 +356,7 @@ export default function Navbar({
           >
             <ShoppingCart className="h-4 w-4" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white shadow-sm ring-1 ring-white">
+              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white shadow-sm ring-1 ring-white animate-pulse">
                 {cartCount}
               </span>
             )}
@@ -317,7 +365,7 @@ export default function Navbar({
           <button
             id="nav-btn-mobile-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-slate-700"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-slate-700 cursor-pointer"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -333,10 +381,86 @@ export default function Navbar({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.15 }}
-            className="md:hidden absolute top-16 left-0 right-0 border-b border-amber-100 bg-[#faf9f6] shadow-xl px-4 py-6 space-y-4"
+            className="xl:hidden absolute top-16 left-0 right-0 border-b border-amber-100 bg-[#faf9f6] shadow-xl px-4 py-6 space-y-4"
             id="mobile-nav-drawer"
           >
-            {/* Search input on Mobile */}
+            {/* 1. Mobile Drawer Top Auth Section */}
+            <div className="border-b border-stone-200/50 pb-4">
+              {currentUser ? (
+                <div className="bg-stone-50 border border-stone-200/60 rounded-2xl p-4 space-y-3 text-left" id="mobile-drawer-profile-top">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-800 text-white font-bold text-sm shadow-inner">
+                      {currentUser.email[0].toUpperCase()}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-bold text-slate-850 truncate">{currentUser.email}</span>
+                      <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider">Patron Member</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-stone-200/50">
+                    <button
+                      onClick={() => { onNavigate('watchlist'); setMobileMenuOpen(false); }}
+                      className="flex items-center space-x-1.5 p-2 rounded-lg bg-white border border-stone-100 text-stone-700 text-[11px] font-bold text-left"
+                    >
+                      <User className="h-3.5 w-3.5 text-amber-700" />
+                      <span>My Profile</span>
+                    </button>
+                    <button
+                      onClick={() => { onNavigate('watchlist'); setMobileMenuOpen(false); }}
+                      className="flex items-center space-x-1.5 p-2 rounded-lg bg-white border border-stone-100 text-stone-700 text-[11px] font-bold text-left"
+                    >
+                      <Bookmark className="h-3.5 w-3.5 text-amber-700" />
+                      <span>Watchlist</span>
+                    </button>
+                    <button
+                      onClick={() => { onNavigate('history'); setMobileMenuOpen(false); }}
+                      className="flex items-center space-x-1.5 p-2 rounded-lg bg-white border border-stone-100 text-stone-700 text-[11px] font-bold text-left"
+                    >
+                      <Clock className="h-3.5 w-3.5 text-amber-700" />
+                      <span>History</span>
+                    </button>
+                    <button
+                      onClick={() => { onNavigate('watchlist'); setMobileMenuOpen(false); }}
+                      className="flex items-center space-x-1.5 p-2 rounded-lg bg-white border border-stone-100 text-stone-700 text-[11px] font-bold text-left"
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5 text-amber-700" />
+                      <span>Saved</span>
+                    </button>
+                    <button
+                      onClick={() => { alert('Premium Settings interface coming soon!'); setMobileMenuOpen(false); }}
+                      className="flex items-center justify-center space-x-1.5 p-2 rounded-lg bg-white border border-stone-100 text-stone-700 text-[11px] font-bold col-span-2"
+                    >
+                      <Settings className="h-3.5 w-3.5 text-stone-450" />
+                      <span>Settings</span>
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => { onSignOut(); setMobileMenuOpen(false); }}
+                    className="flex w-full items-center justify-center space-x-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 py-2.5 text-xs uppercase tracking-wider font-bold text-red-600 transition-all cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3" id="mobile-drawer-auth-top">
+                  <button
+                    onClick={() => { onOpenAuth(false); setMobileMenuOpen(false); }}
+                    className="rounded-xl border border-stone-300 bg-white py-2.5 text-center text-xs uppercase tracking-wider font-bold text-slate-800 cursor-pointer shadow-sm"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => { onOpenAuth(true); setMobileMenuOpen(false); }}
+                    className="rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 py-2.5 text-center text-xs uppercase tracking-wider font-bold text-white cursor-pointer shadow-md"
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Search input on Mobile */}
             <div className="relative flex items-center rounded-xl border border-stone-200 bg-white">
               <span className="pl-3 text-slate-400">
                 <Search className="h-4 w-4" />
@@ -354,7 +478,7 @@ export default function Navbar({
               />
             </div>
 
-            {/* Nav List */}
+            {/* 3. Navigation List */}
             <div className="grid grid-cols-2 gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -367,9 +491,9 @@ export default function Navbar({
                       onNavigate(item.page);
                       setMobileMenuOpen(false);
                     }}
-                    className={`flex items-center space-x-2 p-3 rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors duration-200 ${
+                    className={`flex items-center space-x-2.5 p-3 rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors duration-200 text-left ${
                       isActive 
-                        ? 'bg-amber-50 text-amber-700' 
+                        ? 'bg-amber-50 text-amber-900 border border-amber-200/20' 
                         : 'bg-white border border-stone-100 text-slate-700 hover:bg-stone-50'
                     }`}
                   >
@@ -384,7 +508,7 @@ export default function Navbar({
                 );
               })}
 
-              {/* Replay Welcome Experience on Mobile */}
+              {/* Replay Welcome on Mobile */}
               {onReplayWelcome && (
                 <button
                   id="mobile-nav-btn-replay"
@@ -392,7 +516,7 @@ export default function Navbar({
                     onReplayWelcome();
                     setMobileMenuOpen(false);
                   }}
-                  className="col-span-2 flex items-center justify-center space-x-2 p-3 rounded-xl text-xs uppercase tracking-wider font-semibold bg-amber-50/40 border border-amber-100/40 text-amber-900 hover:bg-amber-50 transition-colors"
+                  className="col-span-2 flex items-center justify-center space-x-2 p-3 rounded-xl text-xs uppercase tracking-wider font-semibold bg-amber-50/30 border border-amber-100/30 text-amber-950 hover:bg-amber-50 transition-colors"
                 >
                   <Sparkles className="h-4 w-4 text-amber-700 animate-pulse" />
                   <span>Replay Welcome Experience</span>
@@ -400,51 +524,7 @@ export default function Navbar({
               )}
             </div>
 
-            {/* User Auth Section on Mobile */}
-            <div className="border-t border-stone-100 pt-4" id="mobile-drawer-user-section">
-              {currentUser ? (
-                <div className="flex flex-col space-y-3">
-                  <div className="flex items-center space-x-3 px-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 font-bold text-sm">
-                      {currentUser.email[0].toUpperCase()}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold text-slate-800 truncate" title={currentUser.email}>
-                        {currentUser.email}
-                      </span>
-                      <span className="text-[10px] font-medium text-slate-400">
-                        My Profile
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      onSignOut();
-                      setMobileMenuOpen(false);
-                    }}
-                    id="mobile-drawer-btn-signout"
-                    className="flex w-full items-center justify-center space-x-2 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 py-3 text-xs uppercase tracking-wider font-semibold text-red-600 transition-all cursor-pointer"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Log Out</span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    onOpenAuth();
-                    setMobileMenuOpen(false);
-                  }}
-                  id="mobile-drawer-btn-signin"
-                  className="flex w-full items-center justify-center space-x-2 rounded-xl bg-amber-700 py-3 text-xs uppercase tracking-wider font-semibold text-white shadow-sm cursor-pointer"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Sign In</span>
-                </button>
-              )}
-            </div>
-
-            {/* Admin CTA at Bottom of Drawer */}
+            {/* 4. Admin section at bottom of Mobile Drawer */}
             {isAdmin && (
               <button
                 id="mobile-drawer-btn-admin"
@@ -454,7 +534,7 @@ export default function Navbar({
                 }}
                 className="flex w-full items-center justify-center space-x-2 rounded-xl bg-slate-900 py-3 text-xs uppercase tracking-wider font-semibold text-white shadow-md cursor-pointer"
               >
-                <ShieldAlert className="h-4 w-4 text-amber-400" />
+                <ShieldAlert className="h-4 w-4 text-amber-400 animate-bounce" />
                 <span>Admin Dashboard</span>
               </button>
             )}
