@@ -1,0 +1,205 @@
+{
+  "collections": [
+    {
+      "name": "products",
+      "description": "Premium tech affiliate products with dynamic specs and multi-retailer pricing",
+      "fields": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "brand": { "type": "string" },
+        "category": { "type": "string" },
+        "subcategory": { "type": "string" },
+        "description": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "images": { "type": "array" },
+        "rating": { "type": "number" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "isBestSeller": { "type": "boolean" },
+        "isEditorsChoice": { "type": "boolean" },
+        "amazonUrl": { "type": "string" },
+        "flipkartUrl": { "type": "string" },
+        "earnkaroUrl": { "type": "string" },
+        "otherUrl": { "type": "string" },
+        "overview": { "type": "string" },
+        "keyFeatures": { "type": "array" },
+        "pros": { "type": "array" },
+        "cons": { "type": "array" },
+        "specifications": { "type": "map" },
+        "performance": { "type": "string" },
+        "whoShouldBuy": { "type": "array" },
+        "whoShouldAvoid": { "type": "array" },
+        "verdict": { "type": "string" },
+        "tags": { "type": "array" },
+        "reviewsCount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "aiTags": { "type": "array" },
+        "communityExpertSummary": { "type": "string" },
+        "recommendationNotes": { "type": "string" },
+        "retailers": { "type": "array" }
+      }
+    },
+    {
+      "name": "categories",
+      "description": "Dynamic product categories with order and icons",
+      "fields": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "bannerImage": { "type": "string" },
+        "displayOrder": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      }
+    },
+    {
+      "name": "posts",
+      "description": "Editorial tech guides and blog posts",
+      "fields": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "postType": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "image": { "type": "string" },
+        "category": { "type": "string" },
+        "author": { "type": "string" },
+        "readTime": { "type": "string" },
+        "publishedAt": { "type": "string" },
+        "relatedProductIds": { "type": "array" },
+        "tags": { "type": "array" }
+      }
+    },
+    {
+      "name": "faqs",
+      "description": "Expert tech recommendation FAQs",
+      "fields": {
+        "id": { "type": "string" },
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "category": { "type": "string" }
+      }
+    },
+    {
+      "name": "star_products",
+      "description": "Star Products of the Day promotional offers",
+      "fields": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "image": { "type": "string" },
+        "originalPrice": { "type": "number" },
+        "discountedPrice": { "type": "number" },
+        "discountPercentage": { "type": "number" },
+        "affiliateUrl": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "order": { "type": "number" },
+        "enabled": { "type": "boolean" },
+        "badgeType": { "type": "string" },
+        "badgeText": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    {
+      "name": "analytics_events",
+      "description": "Anonymous tracking analytics events for admin reports",
+      "fields": {
+        "id": { "type": "string" },
+        "eventType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "targetName": { "type": "string" },
+        "network": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "sessionId": { "type": "string" }
+      }
+    },
+    {
+      "name": "subscribers",
+      "description": "Curated email newsletter subscribers",
+      "fields": {
+        "email": { "type": "string" },
+        "status": { "type": "string" },
+        "verified": { "type": "boolean" },
+        "verificationToken": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "pushPermission": { "type": "boolean" },
+        "fcmToken": { "type": "string" },
+        "clicksCount": { "type": "number" }
+      }
+    },
+    {
+      "name": "marketing_campaigns",
+      "description": "Automated email newsletter and alert campaigns",
+      "fields": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "targetId": { "type": "string" },
+        "sentCount": { "type": "number" },
+        "openCount": { "type": "number" },
+        "clickCount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    {
+      "name": "marketing_logs",
+      "description": "Delivery logs for sent/queued notifications and campaign emails",
+      "fields": {
+        "id": { "type": "string" },
+        "campaignId": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "body": { "type": "string" },
+        "sentAt": { "type": "string" },
+        "status": { "type": "string" },
+        "retryCount": { "type": "number" },
+        "error": { "type": "string" },
+        "opened": { "type": "boolean" },
+        "clicked": { "type": "boolean" },
+        "type": { "type": "string" },
+        "targetId": { "type": "string" }
+      }
+    },
+    {
+      "name": "users",
+      "description": "User profiles, watchlist arrays, saved products and price alert settings",
+      "fields": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "profile": { "type": "map" },
+        "savedProducts": { "type": "array" },
+        "watchlist": { "type": "array" },
+        "priceAlerts": { "type": "array" },
+        "searchHistory": { "type": "array" },
+        "lastLogin": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    {
+      "name": "watchlist",
+      "description": "Explicit individual watchlist products tracking details",
+      "fields": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "productId": { "type": "string" },
+        "targetPrice": { "type": "number" },
+        "notificationsEnabled": { "type": "boolean" },
+        "dateAdded": { "type": "string" }
+      }
+    },
+    {
+      "name": "price_history",
+      "description": "Historical price tracking logs of products from various retailers",
+      "fields": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "retailer": { "type": "string" },
+        "price": { "type": "number" },
+        "timestamp": { "type": "string" }
+      }
+    }
+  ]
+}

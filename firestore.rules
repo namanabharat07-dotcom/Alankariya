@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Secure helper checking if user is the designated admin
+    function isAdmin() {
+      return request.auth != null && 
+             'email' in request.auth.token && 
+             request.auth.token.email.matches('(?i)namanabharat07@gmail.com');
+    }
+
+    // Products collection: public read, write restricted to admin
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Categories collection: public read, write restricted to admin
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Posts collection: public read, write restricted to admin
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // FAQs collection: public read, write restricted to admin
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Star products: public read, write restricted to admin
+    match /star_products/{starId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Analytics telemetry: public creation of logs, read/update/delete restricted to admin
+    match /analytics_events/{eventId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Subscribers: anyone can subscribe (create), but only admin can manage (read/update/delete)
+    match /subscribers/{email} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Marketing Campaigns: public read, write restricted to admin
+    match /marketing_campaigns/{campaignId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Marketing Logs: public read, write restricted to admin
+    match /marketing_logs/{logId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Clicks tracking: logged-in user can create a click log, but only admin can read/update/delete
+    match /clicks/{clickId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Users collection: user can manage their own profile, admin can manage all
+    match /users/{userId} {
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Watchlist collection: user can manage their own watchlist documents, admin can manage all
+    match /watchlist/{watchlistId} {
+      allow read, write: if request.auth != null && (
+        resource == null || 
+        resource.data.userId == request.auth.uid || 
+        request.resource.data.userId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+
+    // Price History collection: public read, write restricted to admin
+    match /price_history/{historyId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

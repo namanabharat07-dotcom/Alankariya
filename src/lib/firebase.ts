@@ -1,0 +1,600 @@
+import { initializeApp } from 'firebase/app';
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  getDocs, 
+  getDoc,
+  setDoc, 
+  deleteDoc, 
+  writeBatch
+} from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory, WatchlistItem, PriceHistoryItem, UserProfile } from '../types';
+
+import firebaseConfig from '../../firebase-applet-config.json';
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize Firestore
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Initialize Authentication
+export const auth = getAuth(app);
+
+// Save User Profile
+export async function saveUserProfile(uid: string, email: string): Promise<void> {
+  try {
+    const docRef = doc(db, 'users', uid);
+    await setDoc(docRef, cleanData({
+      uid,
+      email,
+      lastLogin: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }), { merge: true });
+  } catch (error) {
+    console.error('Error saving user profile:', error);
+  }
+}
+
+// Save User Clicking Event
+export interface ClickingLog {
+  id: string;
+  userId: string;
+  userEmail: string;
+  productId: string;
+  productTitle: string;
+  network: string;
+  url: string;
+  timestamp: string;
+}
+
+export async function saveClickingToFirestore(clicking: ClickingLog): Promise<void> {
+  try {
+    const docRef = doc(db, 'clicks', clicking.id);
+    await setDoc(docRef, cleanData(clicking));
+  } catch (error) {
+    console.error('Error saving clicking details:', error);
+  }
+}
+
+// Collection References
+const PRODUCTS_COLLECTION = 'products';
+const POSTS_COLLECTION = 'posts';
+const FAQS_COLLECTION = 'faqs';
+const ANALYTICS_COLLECTION = 'analytics_events';
+const STAR_PRODUCTS_COLLECTION = 'star_products';
+const CATEGORIES_COLLECTION = 'categories';
+
+/**
+ * Sanitizes an object recursively to remove all undefined values so Firestore does not throw an error.
+ */
+function cleanData<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return null as any;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => cleanData(item)) as any;
+  }
+  if (typeof obj === 'object') {
+    if (obj instanceof Date) {
+      return obj;
+    }
+    const cleaned: any = {};
+    for (const key of Object.keys(obj)) {
+      const val = (obj as any)[key];
+      if (val !== undefined) {
+        cleaned[key] = cleanData(val);
+      }
+    }
+    return cleaned as T;
+  }
+  return obj;
+}
+
+/**
+ * Fetch all products from Firestore
+ */
+export async function getProductsFromFirestore(): Promise<Product[]> {
+  try {
+    const colRef = collection(db, PRODUCTS_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    const products: Product[] = [];
+    snapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() } as Product);
+    });
+    return products;
+  } catch (error) {
+    console.error('Error fetching products from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save or update a single product in Firestore
+ */
+export async function saveProductToFirestore(product: Product): Promise<void> {
+  try {
+    const docRef = doc(db, PRODUCTS_COLLECTION, product.id);
+    await setDoc(docRef, cleanData(product));
+  } catch (error) {
+    console.error(`Error saving product ${product.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a product from Firestore
+ */
+export async function deleteProductFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, PRODUCTS_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting product ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all posts from Firestore
+ */
+export async function getPostsFromFirestore(): Promise<Post[]> {
+  try {
+    const colRef = collection(db, POSTS_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    const posts: Post[] = [];
+    snapshot.forEach((doc) => {
+      posts.push({ id: doc.id, ...doc.data() } as Post);
+    });
+    return posts;
+  } catch (error) {
+    console.error('Error fetching posts from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save or update a post in Firestore
+ */
+export async function savePostToFirestore(post: Post): Promise<void> {
+  try {
+    const docRef = doc(db, POSTS_COLLECTION, post.id);
+    await setDoc(docRef, cleanData(post));
+  } catch (error) {
+    console.error(`Error saving post ${post.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a post from Firestore
+ */
+export async function deletePostFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, POSTS_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting post ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all FAQs from Firestore
+ */
+export async function getFaqsFromFirestore(): Promise<FAQItem[]> {
+  try {
+    const colRef = collection(db, FAQS_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    const faqs: FAQItem[] = [];
+    snapshot.forEach((doc) => {
+      faqs.push({ id: doc.id, ...doc.data() } as FAQItem);
+    });
+    return faqs;
+  } catch (error) {
+    console.error('Error fetching FAQs from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save or update an FAQ in Firestore
+ */
+export async function saveFaqToFirestore(faq: FAQItem): Promise<void> {
+  try {
+    const docRef = doc(db, FAQS_COLLECTION, faq.id);
+    await setDoc(docRef, cleanData(faq));
+  } catch (error) {
+    console.error(`Error saving FAQ ${faq.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete an FAQ from Firestore
+ */
+export async function deleteFaqFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, FAQS_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting FAQ ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all analytics events from Firestore
+ */
+export async function getAnalyticsEventsFromFirestore(): Promise<AnalyticsEvent[]> {
+  try {
+    const colRef = collection(db, ANALYTICS_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    const events: AnalyticsEvent[] = [];
+    snapshot.forEach((doc) => {
+      events.push({ id: doc.id, ...doc.data() } as AnalyticsEvent);
+    });
+    // Sort by timestamp
+    events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    return events;
+  } catch (error) {
+    console.warn('Error fetching analytics events from Firestore (unauthorized or empty):', error);
+    return [];
+  }
+}
+
+/**
+ * Add an analytics event to Firestore
+ */
+export async function saveAnalyticsEventToFirestore(event: AnalyticsEvent): Promise<void> {
+  try {
+    const docRef = doc(db, ANALYTICS_COLLECTION, event.id);
+    await setDoc(docRef, cleanData(event));
+  } catch (error) {
+    console.error(`Error saving analytics event ${event.id} to Firestore:`, error);
+  }
+}
+
+/**
+ * Seeds default data into Firestore if it doesn't already exist
+ */
+export async function seedInitialDataIfEmpty(
+  defaultProducts: Product[],
+  defaultPosts: Post[],
+  defaultFaqs: FAQItem[],
+  defaultCategories: ProductCategory[]
+): Promise<{ products: Product[]; posts: Post[]; faqs: FAQItem[]; categories: ProductCategory[] }> {
+  try {
+    // 1. Products
+    let products = await getProductsFromFirestore();
+    if (products.length === 0 && defaultProducts.length > 0) {
+      console.log('Seeding products collection in Firestore...');
+      try {
+        const batch = writeBatch(db);
+        defaultProducts.forEach((p) => {
+          const docRef = doc(db, PRODUCTS_COLLECTION, p.id);
+          batch.set(docRef, cleanData(p));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn('Unable to write seed products to Firestore (visitor permissions), falling back to local defaults:', err);
+      }
+      products = [...defaultProducts];
+    }
+
+    // 2. Posts
+    let posts = await getPostsFromFirestore();
+    if (posts.length === 0 && defaultPosts.length > 0) {
+      console.log('Seeding posts collection in Firestore...');
+      try {
+        const batch = writeBatch(db);
+        defaultPosts.forEach((p) => {
+          const docRef = doc(db, POSTS_COLLECTION, p.id);
+          batch.set(docRef, cleanData(p));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn('Unable to write seed posts to Firestore (visitor permissions), falling back to local defaults:', err);
+      }
+      posts = [...defaultPosts];
+    }
+
+    // 3. FAQs
+    let faqs = await getFaqsFromFirestore();
+    if (faqs.length === 0 && defaultFaqs.length > 0) {
+      console.log('Seeding FAQs collection in Firestore...');
+      try {
+        const batch = writeBatch(db);
+        defaultFaqs.forEach((f) => {
+          const docRef = doc(db, FAQS_COLLECTION, f.id);
+          batch.set(docRef, cleanData(f));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn('Unable to write seed FAQs to Firestore (visitor permissions), falling back to local defaults:', err);
+      }
+      faqs = [...defaultFaqs];
+    }
+
+    // 4. Star Products
+    let starProducts = await getStarProductsFromFirestore();
+    if (starProducts.length === 0) {
+      console.log('Seeding star_products collection in Firestore...');
+      const defaultStarProducts: StarProduct[] = [
+        {
+          id: 'star-1',
+          title: 'Sony WH-1000XM5 Wireless Headphones',
+          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+          originalPrice: 449,
+          discountedPrice: 349,
+          discountPercentage: 22,
+          affiliateUrl: 'https://amazon.com/dp/B09XS7JLH3?tag=myaffiliate-20',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          order: 0,
+          enabled: true,
+          badgeType: 'biggest_deal',
+          badgeText: "🔥 Today's Biggest Deal",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'star-2',
+          title: 'Apple iPad Air M1 (5th Gen, 64GB)',
+          image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80',
+          originalPrice: 599,
+          discountedPrice: 499,
+          discountPercentage: 17,
+          affiliateUrl: 'https://amazon.com/dp/B09V3K4CH4?tag=myaffiliate-20',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          order: 1,
+          enabled: true,
+          badgeType: 'limited_time',
+          badgeText: '⚡ Limited Time Offer',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'star-3',
+          title: 'Anker Magnetic Portable Charger 5K',
+          image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b17c?auto=format&fit=crop&w=800&q=80',
+          originalPrice: 45,
+          discountedPrice: 29,
+          discountPercentage: 35,
+          affiliateUrl: 'https://amazon.com/dp/B09923N1DS?tag=myaffiliate-20',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          order: 2,
+          enabled: true,
+          badgeType: 'best_discount',
+          badgeText: '💰 Best Discount Today',
+          createdAt: new Date().toISOString()
+        }
+      ];
+      try {
+        const batch = writeBatch(db);
+        defaultStarProducts.forEach((sp) => {
+          const docRef = doc(db, STAR_PRODUCTS_COLLECTION, sp.id);
+          batch.set(docRef, cleanData(sp));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn('Unable to write seed star products to Firestore (visitor permissions), falling back to local defaults:', err);
+      }
+      starProducts = [...defaultStarProducts];
+    }
+
+    // 5. Categories
+    let categories = await getCategoriesFromFirestore();
+    if (categories.length === 0 && defaultCategories.length > 0) {
+      console.log('Seeding categories collection in Firestore...');
+      try {
+        const batch = writeBatch(db);
+        defaultCategories.forEach((cat) => {
+          const docRef = doc(db, CATEGORIES_COLLECTION, cat.id);
+          batch.set(docRef, cleanData(cat));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn('Unable to write seed categories to Firestore (visitor permissions), falling back to local defaults:', err);
+      }
+      categories = [...defaultCategories];
+    }
+
+    return { products, posts, faqs, categories };
+  } catch (error) {
+    console.warn('Soft-handled warning during Firestore database seeding check:', error);
+    return {
+      products: defaultProducts,
+      posts: defaultPosts,
+      faqs: defaultFaqs,
+      categories: defaultCategories
+    };
+  }
+}
+
+/**
+ * Fetch all star products from Firestore
+ */
+export async function getStarProductsFromFirestore(): Promise<StarProduct[]> {
+  try {
+    const colRef = collection(db, STAR_PRODUCTS_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    const stars: StarProduct[] = [];
+    snapshot.forEach((doc) => {
+      stars.push({ id: doc.id, ...doc.data() } as StarProduct);
+    });
+    // Sort by order ascending
+    stars.sort((a, b) => a.order - b.order);
+    return stars;
+  } catch (error) {
+    console.error('Error fetching star products from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save or update a star product in Firestore
+ */
+export async function saveStarProductToFirestore(star: StarProduct): Promise<void> {
+  try {
+    const docRef = doc(db, STAR_PRODUCTS_COLLECTION, star.id);
+    await setDoc(docRef, cleanData(star));
+  } catch (error) {
+    console.error(`Error saving star product ${star.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a star product from Firestore
+ */
+export async function deleteStarProductFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, STAR_PRODUCTS_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting star product ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all product categories from Firestore
+ */
+export async function getCategoriesFromFirestore(): Promise<ProductCategory[]> {
+  try {
+    const colRef = collection(db, CATEGORIES_COLLECTION);
+    const snapshot = await getDocs(colRef);
+    const list: ProductCategory[] = [];
+    snapshot.forEach((doc) => {
+      list.push({ id: doc.id, ...doc.data() } as ProductCategory);
+    });
+    list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    return list;
+  } catch (error) {
+    console.error('Error fetching categories from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save or update a product category in Firestore
+ */
+export async function saveCategoryToFirestore(category: ProductCategory): Promise<void> {
+  try {
+    const docRef = doc(db, CATEGORIES_COLLECTION, category.id);
+    await setDoc(docRef, cleanData(category));
+  } catch (error) {
+    console.error(`Error saving category ${category.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a product category from Firestore
+ */
+export async function deleteCategoryFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, CATEGORIES_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting category ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all watchlist entries from Firestore
+ */
+export async function getWatchlistFromFirestore(): Promise<WatchlistItem[]> {
+  try {
+    const colRef = collection(db, 'watchlist');
+    const snapshot = await getDocs(colRef);
+    const watchlist: WatchlistItem[] = [];
+    snapshot.forEach((doc) => {
+      watchlist.push({ id: doc.id, ...doc.data() } as WatchlistItem);
+    });
+    return watchlist;
+  } catch (error) {
+    console.error('Error fetching watchlist from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save or update a watchlist entry in Firestore
+ */
+export async function saveWatchlistItemToFirestore(item: WatchlistItem): Promise<void> {
+  try {
+    const docRef = doc(db, 'watchlist', item.id);
+    await setDoc(docRef, cleanData(item));
+  } catch (error) {
+    console.error(`Error saving watchlist item ${item.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a watchlist entry from Firestore
+ */
+export async function deleteWatchlistItemFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, 'watchlist', id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting watchlist item ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all price history logs from Firestore
+ */
+export async function getPriceHistoryFromFirestore(): Promise<PriceHistoryItem[]> {
+  try {
+    const colRef = collection(db, 'price_history');
+    const snapshot = await getDocs(colRef);
+    const history: PriceHistoryItem[] = [];
+    snapshot.forEach((doc) => {
+      history.push({ id: doc.id, ...doc.data() } as PriceHistoryItem);
+    });
+    // Sort by timestamp descending
+    history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return history;
+  } catch (error) {
+    console.error('Error fetching price history from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save a new price history record to Firestore
+ */
+export async function savePriceHistoryToFirestore(item: PriceHistoryItem): Promise<void> {
+  try {
+    const docRef = doc(db, 'price_history', item.id);
+    await setDoc(docRef, cleanData(item));
+  } catch (error) {
+    console.error(`Error saving price history ${item.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch user profile from Firestore
+ */
+export async function getUserProfileFromFirestore(uid: string): Promise<UserProfile | null> {
+  try {
+    const docRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as UserProfile;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error getting user profile ${uid}:`, error);
+    return null;
+  }
+}

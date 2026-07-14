@@ -1,0 +1,6 @@
+{
+  "name": "Alankariya Shopping Assistant",
+  "description": "A premium, modern shopping assistant and curated catalog with product searches, comparisons, buying checklists, price histories, and expert buyer advice inspired by top e-commerce platforms.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

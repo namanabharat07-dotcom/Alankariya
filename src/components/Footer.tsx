@@ -1,0 +1,227 @@
+import React, { useState } from 'react';
+import { Mail, ArrowRight, Github, ExternalLink, Heart } from 'lucide-react';
+
+import { subscribeUser, requestBrowserNotification } from '../lib/marketing';
+
+interface FooterProps {
+  onNavigate: (page: string) => void;
+  onReplayWelcome?: () => void;
+}
+
+export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
+  const [email, setEmail] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubscribeError(null);
+    if (!email.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      // 1. Subscribe in Firestore & trigger automated Welcome Email campaign
+      await subscribeUser(email);
+      
+      setIsSubscribed(true);
+      setEmail('');
+      
+      // 2. Automatically prompt user for browser push permissions on subscription!
+      try {
+        const { permission } = await requestBrowserNotification();
+        if (permission === 'granted') {
+          console.log('Browser notifications permission granted during subscription');
+        }
+      } catch (pushErr) {
+        console.warn('Silent fallback for browser push notification prompt inside frame:', pushErr);
+      }
+
+      setTimeout(() => setIsSubscribed(false), 6000);
+    } catch (err: any) {
+      console.error('Subscription error:', err);
+      setSubscribeError(err.message || 'Subscription failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const footerLinks = {
+    platform: [
+      { name: 'Featured Products', page: 'home' },
+      { name: 'Compare Products', page: 'compare' },
+      { name: 'FAQs', page: 'faqs' }
+    ],
+    resources: [
+      { name: 'Style Guides', page: 'guides_list' },
+      { name: 'Articles', page: 'blogs_list' }
+    ],
+    trust: [
+      { name: 'About Us', page: 'about' },
+      { name: 'Contact', page: 'contact' },
+      { name: 'Affiliate Disclosure', page: 'disclosure' },
+      { name: 'Legal Disclaimer', page: 'disclaimer' },
+      { name: 'Privacy Policy', page: 'privacy' },
+      { name: 'Terms of Service', page: 'terms' }
+    ]
+  };
+
+  return (
+    <footer className="border-t border-amber-100 bg-[#fbfaf7] pt-16 pb-8" id="app-footer">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        
+        {/* Top Segment: Newsletter and Intro */}
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 pb-12 border-b border-amber-100/60">
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-700 text-white font-display font-medium text-lg tracking-wide">
+                A
+              </div>
+              <span className="font-display font-bold text-2xl tracking-wide text-slate-900">
+                Alanka<span className="text-amber-700 font-light italic">riya</span>
+              </span>
+            </div>
+            <p className="max-w-md text-sm text-slate-500 leading-relaxed font-light">
+              Your guide to the best fashion, home, and beauty products. We review and compare products so you can buy with confidence.
+            </p>
+          </div>
+ 
+          {/* Newsletter Box */}
+          <div className="lg:col-span-2 space-y-4">
+            <h4 className="font-display text-lg font-medium text-slate-800 tracking-wide">
+              Stay in the loop
+            </h4>
+            <p className="text-sm text-slate-500 font-light">
+              Sign up for our newsletter to get style tips, product reviews, and deal updates delivered to your inbox.
+            </p>
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-lg" id="newsletter-form">
+              <div className="relative flex-1">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Mail className="h-4 w-4" />
+                </span>
+                <input
+                  type="email"
+                  required
+                  disabled={isSubmitting || isSubscribed}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-200 transition-all font-light disabled:bg-stone-50 disabled:text-stone-400"
+                />
+              </div>
+              <button
+                type="submit"
+                id="footer-subscribe-btn"
+                disabled={isSubmitting || isSubscribed}
+                className="inline-flex items-center justify-center space-x-2 rounded-xl bg-amber-700 hover:bg-amber-800 disabled:bg-amber-800/60 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors cursor-pointer"
+              >
+                {isSubscribed ? (
+                  <span>Thank you for subscribing!</span>
+                ) : isSubmitting ? (
+                  <span>Subscribing...</span>
+                ) : (
+                  <>
+                    <span>Subscribe</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </form>
+            {subscribeError && (
+              <p className="text-xs text-red-500 font-medium mt-1.5" id="subscribe-error-msg">
+                {subscribeError}
+              </p>
+            )}
+          </div>
+        </div>
+ 
+        {/* Middle Segment: Nav Columns */}
+        <div className="grid grid-cols-2 gap-8 py-12 md:grid-cols-3 lg:grid-cols-4">
+          <div>
+            <h5 className="font-sans font-bold text-[11px] uppercase tracking-wider text-amber-800/80 mb-4">
+              Platform
+            </h5>
+            <ul className="space-y-2.5">
+              {footerLinks.platform.map((link) => (
+                <li key={link.name}>
+                  <button
+                    onClick={() => onNavigate(link.page)}
+                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light"
+                  >
+                    {link.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+ 
+          <div>
+            <h5 className="font-sans font-bold text-[11px] uppercase tracking-wider text-amber-800/80 mb-4">
+              Resources
+            </h5>
+            <ul className="space-y-2.5">
+              {footerLinks.resources.map((link) => (
+                <li key={link.name}>
+                  <button
+                    onClick={() => onNavigate(link.page)}
+                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light"
+                  >
+                    {link.name}
+                  </button>
+                </li>
+              ))}
+              {onReplayWelcome && (
+                <li>
+                  <button
+                    onClick={onReplayWelcome}
+                    id="footer-btn-replay-welcome"
+                    className="text-sm text-amber-700 hover:text-amber-800 hover:underline transition-colors text-left font-medium flex items-center space-x-1"
+                  >
+                    <span className="animate-pulse">✨</span>
+                    <span>Replay Welcome Experience</span>
+                  </button>
+                </li>
+              )}
+            </ul>
+          </div>
+ 
+          <div className="col-span-2 md:col-span-1 lg:col-span-2">
+            <h5 className="font-sans font-bold text-[11px] uppercase tracking-wider text-amber-800/80 mb-4">
+              Trust & Legal
+            </h5>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {footerLinks.trust.map((link) => (
+                <div key={link.name}>
+                  <button
+                    onClick={() => onNavigate(link.page)}
+                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light"
+                  >
+                    {link.name}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+ 
+        {/* Bottom Segment: Affiliate disclaimer note & Copyright */}
+        <div className="border-t border-amber-100/40 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4" id="footer-copyright-container">
+          <div className="text-center md:text-left space-y-2 max-w-2xl">
+            <p className="font-light">
+              © {new Date().getFullYear()} Alankariya. All rights reserved.
+            </p>
+            <p className="leading-relaxed text-[11px] text-slate-400 font-light">
+              <strong className="text-slate-500 font-medium">Affiliate Disclosure:</strong> We may earn a small commission when you buy through our links, at no extra cost to you. This helps us continue reviewing products independently.
+            </p>
+          </div>
+          <div className="flex items-center space-x-1 font-sans text-[11px] text-slate-400/80 font-light">
+            <span>Made with</span>
+            <Heart className="h-3 w-3 text-amber-600 fill-amber-600" />
+            <span>for timeless style</span>
+          </div>
+        </div>
+
+      </div>
+    </footer>
+  );
+}
