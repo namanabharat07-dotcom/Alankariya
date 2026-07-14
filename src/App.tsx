@@ -63,7 +63,7 @@ export default function App() {
   // --- Premium Welcome Experience State ---
   const [showWelcome, setShowWelcome] = useState(() => {
     try {
-      const viewed = localStorage.getItem('alankapriya_welcome_viewed');
+      const viewed = localStorage.getItem('alankapriya_intro_seen');
       return viewed !== 'true';
     } catch (e) {
       return true;
@@ -90,6 +90,11 @@ export default function App() {
   }, []);
 
   const handleWelcomeComplete = () => {
+    try {
+      localStorage.setItem('alankapriya_intro_seen', 'true');
+    } catch (e) {
+      console.error(e);
+    }
     setShowWelcome(false);
     setTimeout(() => {
       const searchInput = document.getElementById('home-hero-search-input');
@@ -100,7 +105,11 @@ export default function App() {
   };
 
   const handleReplayWelcome = () => {
-    localStorage.removeItem('alankapriya_welcome_viewed');
+    try {
+      localStorage.removeItem('alankapriya_intro_seen');
+    } catch (e) {
+      console.error(e);
+    }
     setShowWelcome(true);
   };
 
