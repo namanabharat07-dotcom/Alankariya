@@ -39,8 +39,8 @@ export default function CartDrawer({
     setPromoError('');
     const code = promoCode.trim().toUpperCase();
 
-    if (code === 'ALANKARIYA10') {
-      setAppliedDiscount({ code: 'ALANKARIYA10', percent: 10 });
+    if (code === 'ALANKAPRIYA10') {
+      setAppliedDiscount({ code: 'ALANKAPRIYA10', percent: 10 });
       setPromoCode('');
     } else if (code === 'MYNTRA50') {
       setAppliedDiscount({ code: 'MYNTRA50', percent: 50 });
@@ -49,7 +49,7 @@ export default function CartDrawer({
       setAppliedDiscount({ code: 'FESTIVE30', percent: 30 });
       setPromoCode('');
     } else {
-      setPromoError('Invalid promo code. Try "MYNTRA50", "ALANKARIYA10", or "FESTIVE30"');
+      setPromoError('Invalid promo code. Try "MYNTRA50", "ALANKAPRIYA10", or "FESTIVE30"');
     }
   };
 
@@ -147,7 +147,7 @@ export default function CartDrawer({
                   <div>
                     <h4 className="font-display font-bold text-sm text-stone-800">Your bag is empty</h4>
                     <p className="text-xs text-stone-400 max-w-xs mx-auto mt-1 font-light">
-                      Browse Alankariya's exclusive curations, compare styles, and add premium items to your cart.
+                      Browse Alankapriya's exclusive curations, compare styles, and add premium items to your cart.
                     </p>
                   </div>
                   <button
@@ -254,7 +254,7 @@ export default function CartDrawer({
                           type="text"
                           value={promoCode}
                           onChange={(e) => { setPromoCode(e.target.value); setPromoError(''); }}
-                          placeholder="e.g. MYNTRA50 or ALANKARIYA10"
+                          placeholder="e.g. MYNTRA50 or ALANKAPRIYA10"
                           className="flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 outline-none uppercase font-semibold"
                         />
                         <button
@@ -274,7 +274,7 @@ export default function CartDrawer({
                       <span>Suggestions:</span>
                       <button onClick={() => setPromoCode('MYNTRA50')} className="hover:underline font-bold text-stone-500 cursor-pointer">MYNTRA50 (50% Off)</button>
                       <span>•</span>
-                      <button onClick={() => setPromoCode('ALANKARIYA10')} className="hover:underline font-bold text-stone-500 cursor-pointer">ALANKARIYA10 (10% Off)</button>
+                      <button onClick={() => setPromoCode('ALANKAPRIYA10')} className="hover:underline font-bold text-stone-500 cursor-pointer">ALANKAPRIYA10 (10% Off)</button>
                     </div>
                   </div>
                 </div>
@@ -385,7 +385,7 @@ export default function CartDrawer({
                 )}
 
                 <p className="text-[9px] text-stone-400 text-center font-light leading-relaxed">
-                  *Alankariya automatically compares and matches your cart across the cheapest available sellers on Amazon, Flipkart, & referral networks. All prices are verified.
+                  *Alankapriya automatically compares and matches your cart across the cheapest available sellers on Amazon, Flipkart, & referral networks. All prices are verified.
                 </p>
               </div>
             )}

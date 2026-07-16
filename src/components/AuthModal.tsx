@@ -212,7 +212,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialIsSignUp 
 
         {/* Toggle Modal View */}
         <div className="mt-5 text-center text-xs text-stone-500 border-t border-stone-100 pt-4">
-          <span>{isSignUp ? 'Already have an account?' : 'New to Alankariya?'} </span>
+          <span>{isSignUp ? 'Already have an account?' : 'New to Alankapriya?'} </span>
           <button 
             onClick={() => {
               setIsSignUp(!isSignUp);

@@ -58,7 +58,7 @@ export default function Navbar({
     { name: 'Home', page: 'home', icon: Layers },
     { name: 'Categories', page: 'categories', icon: Search },
     { name: 'Compare', page: 'compare', icon: ArrowLeftRight, badge: compareCount > 0 ? compareCount : undefined },
-    { name: 'Price Tracker', page: 'price-tracker', icon: Clock },
+    { name: 'Price Intelligence', page: 'price-tracker', icon: Clock },
     { name: 'Watchlist', page: 'watchlist', icon: Bookmark },
     { name: 'About', page: 'about', icon: HelpCircle },
     { name: 'Contact', page: 'contact', icon: Headphones }
@@ -70,16 +70,16 @@ export default function Navbar({
         
         {/* Brand Logo */}
         <div 
-          className="flex cursor-pointer items-center space-x-2.5 shrink-0" 
+          className="flex cursor-pointer items-center space-x-1.5 sm:space-x-2.5 shrink-0" 
           onClick={() => { onNavigate('home'); setMobileMenuOpen(false); }}
           id="nav-logo"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-800 text-[#faf9f6] font-display font-medium text-xl shadow-sm transition-transform hover:scale-105">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-800 text-[#faf9f6] font-display font-medium text-lg sm:text-xl shadow-sm transition-transform hover:scale-105">
             A
           </div>
-          <span className="font-display font-bold text-2xl tracking-wide text-slate-900 flex items-center">
+          <span className="font-display font-bold text-lg sm:text-2xl tracking-wide text-slate-900 flex items-center">
             Alanka<span className="text-amber-700 font-light italic">riya</span>
-            <span className="ml-1.5 text-[9px] font-sans font-semibold uppercase text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200/40">STORE</span>
+            <span className="hidden sm:inline-flex ml-1.5 text-[9px] font-sans font-semibold uppercase text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200/40">STORE</span>
           </span>
         </div>
 
@@ -118,10 +118,10 @@ export default function Navbar({
           })}
         </nav>
 
-        {/* Global Search, Actions, & Auth */}
-        <div className="hidden md:flex items-center space-x-3.5" id="nav-right-actions">
-          {/* Integrated Search Input */}
-          <div className={`relative flex items-center rounded-xl border bg-white transition-all duration-300 ${
+        {/* Unified Responsive Actions & Auth block (Always Visible) */}
+        <div className="flex items-center space-x-2 md:space-x-3.5" id="nav-right-actions-unified">
+          {/* Integrated Search Input (only on md and up) */}
+          <div className={`relative hidden md:flex items-center rounded-xl border bg-white transition-all duration-300 ${
             isSearchFocused 
               ? 'w-64 border-amber-600 ring-1 ring-amber-100' 
               : 'w-40 lg:w-48 border-stone-200 hover:border-stone-300'
@@ -199,35 +199,31 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Admin Toggle Button */}
+          {/* Admin Toggle Button (only on md and up) */}
           {isAdmin && (
             <button
               id="nav-btn-admin"
               onClick={() => onNavigate('admin')}
-              className={`flex items-center space-x-1.5 rounded-xl px-3 py-2 text-xs uppercase tracking-wider font-semibold transition-all duration-200 shadow-sm ${
-                currentPage === 'admin'
-                  ? 'bg-slate-900 text-white shadow-slate-900/10'
-                  : 'bg-white border border-stone-200 text-slate-700 hover:bg-stone-50'
-              }`}
+              className="hidden md:flex items-center space-x-1.5 rounded-xl px-3 py-2 text-xs uppercase tracking-wider font-semibold transition-all duration-200 shadow-sm bg-white border border-stone-200 text-slate-700 hover:bg-stone-50"
             >
               <ShieldAlert className="h-3.5 w-3.5 text-amber-750 animate-pulse" />
               <span>Admin</span>
             </button>
           )}
 
-          {/* Replay Welcome Intro */}
+          {/* Replay Welcome Intro (only on md and up) */}
           {onReplayWelcome && (
             <button
               onClick={onReplayWelcome}
               id="nav-btn-replay-welcome"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-stone-200 bg-white text-slate-500 hover:text-amber-800 hover:border-amber-200 hover:bg-amber-50/20 transition-all duration-200 cursor-pointer shadow-sm"
+              className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl border border-stone-200 bg-white text-slate-500 hover:text-amber-800 hover:border-amber-200 hover:bg-amber-50/20 transition-all duration-200 cursor-pointer shadow-sm"
               title="Replay Welcome Experience"
             >
               <Sparkles className="h-4 w-4 text-amber-700 animate-pulse" />
             </button>
           )}
 
-          {/* Shopping Bag Button */}
+          {/* Shopping Bag Button (Always Visible) */}
           <button
             onClick={onOpenCart}
             id="nav-btn-cart"
@@ -242,19 +238,19 @@ export default function Navbar({
             )}
           </button>
 
-          {/* User Auth Section - Premium Sign In & Sign Up and Profile avatar menu */}
-          <div className="flex items-center space-x-2 pl-2 border-l border-stone-200/60" id="nav-auth-wrapper">
+          {/* User Auth Section - Premium Sign In & Create Account or Profile avatar menu (Always Visible) */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2 pl-2 border-l border-stone-200/60" id="nav-auth-wrapper">
             {currentUser ? (
               <div className="relative" id="nav-user-dropdown-container">
                 <button
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  className="flex items-center space-x-2 rounded-full border border-stone-200 bg-white p-1 pr-3 hover:bg-stone-50 transition-all cursor-pointer"
+                  className="flex items-center space-x-1.5 sm:space-x-2 rounded-full border border-stone-200 bg-white p-1 pr-1.5 sm:pr-3 hover:bg-stone-50 transition-all cursor-pointer"
                   id="nav-user-profile-btn"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-800 text-white font-bold text-xs shadow-inner">
                     {currentUser.email[0].toUpperCase()}
                   </div>
-                  <span className="text-xs font-semibold text-slate-850 max-w-[90px] truncate">
+                  <span className="hidden xs:inline-block text-xs font-semibold text-slate-850 max-w-[90px] truncate">
                     {currentUser.email.split('@')[0]}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
@@ -325,47 +321,31 @@ export default function Navbar({
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 shrink-0">
+              <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
                 <button
                   onClick={() => onOpenAuth(false)}
                   id="nav-btn-signin"
-                  className="rounded-xl border border-stone-300 bg-white hover:bg-stone-50 px-3.5 py-1.5 text-xs uppercase tracking-wider font-bold text-slate-800 transition-all cursor-pointer shadow-sm"
+                  className="rounded-xl border border-stone-300 bg-white hover:bg-stone-50 px-2 sm:px-3.5 py-1.5 text-[10px] sm:text-xs uppercase tracking-wider font-bold text-slate-800 transition-all cursor-pointer shadow-sm"
                 >
                   Sign In
                 </button>
                 <button
                   onClick={() => onOpenAuth(true)}
                   id="nav-btn-signup"
-                  className="rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-750 hover:to-amber-950 px-3.5 py-1.5 text-xs uppercase tracking-wider font-bold text-white transition-all scale-100 hover:scale-[1.02] cursor-pointer shadow-md"
+                  className="rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-750 hover:to-amber-950 px-2 sm:px-3.5 py-1.5 text-[10px] sm:text-xs uppercase tracking-wider font-bold text-white transition-all scale-100 hover:scale-[1.02] cursor-pointer shadow-md whitespace-nowrap"
                 >
-                  Sign Up
+                  <span className="sm:hidden">Register</span>
+                  <span className="hidden sm:inline">Create Account</span>
                 </button>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Mobile Navigation Drawer Trigger */}
-        <div className="flex xl:hidden items-center space-x-3.5" id="mobile-nav-actions">
-          {/* Mobile Shopping Bag */}
-          <button
-            onClick={onOpenCart}
-            id="nav-btn-cart-mobile"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-slate-700"
-            title="Shopping Bag"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white shadow-sm ring-1 ring-white animate-pulse">
-                {cartCount}
-              </span>
-            )}
-          </button>
-
+          {/* Mobile Drawer trigger (Visible on screen < xl) */}
           <button
             id="nav-btn-mobile-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-slate-700 cursor-pointer"
+            className="xl:hidden flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-slate-700 cursor-pointer"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>

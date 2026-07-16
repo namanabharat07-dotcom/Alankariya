@@ -3,9 +3,25 @@ import { Product, getProductAffiliateButtons } from '../types';
 import { 
   Star, ShoppingCart, CheckCircle2, AlertCircle, ArrowLeft, ArrowLeftRight, Check,
   ThumbsUp, ThumbsDown, ShieldCheck, Zap, UserCheck, UserX, Award,
-  ShoppingBag, Percent, ExternalLink, Tag, Globe, Truck, MapPin, Calendar
+  ShoppingBag, Percent, ExternalLink, Tag, Globe, Truck, MapPin, Calendar, TrendingDown
 } from 'lucide-react';
 import { motion } from 'motion/react';
+
+const getColorName = (col: string): string => {
+  if (!col) return '';
+  if (col.startsWith('http') || col.startsWith('/') || col.includes('.')) {
+    try {
+      const parts = col.split('/');
+      const last = parts[parts.length - 1];
+      const nameWithExt = last.split('?')[0];
+      const name = nameWithExt.split('.')[0];
+      return name.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    } catch (e) {
+      return 'Swatch Photo';
+    }
+  }
+  return col;
+};
 
 interface ProductDetailProps {
   product: Product;
@@ -16,6 +32,7 @@ interface ProductDetailProps {
   onNavigateToProduct: (productId: string) => void;
   onAffiliateClick: (productId: string, network: string, url: string, e: React.MouseEvent) => void;
   onAddToCart?: (product: Product, size?: string) => void;
+  onNavigate?: (page: string, params?: Record<string, any>) => void;
 }
 
 export default function ProductDetail({
@@ -26,7 +43,8 @@ export default function ProductDetail({
   onToggleCompare,
   onNavigateToProduct,
   onAffiliateClick,
-  onAddToCart
+  onAddToCart,
+  onNavigate
 }: ProductDetailProps) {
   const [activeImage, setActiveImage] = useState(product.images[0]);
   const [activeTab, setActiveTab] = useState<'overview' | 'features' | 'specs' | 'performance' | 'verdict' | 'checklist' | 'reviews'>('overview');
@@ -314,6 +332,20 @@ export default function ProductDetail({
                   </span>
                 )}
               </div>
+              {/* Inventory / Stock status */}
+              <div className="mt-2.5 flex items-center space-x-2">
+                {product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0) ? (
+                  <span className="inline-flex items-center space-x-1 rounded-full bg-rose-50 border border-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700 shadow-xs">
+                    <span className="h-2 w-2 rounded-full bg-rose-600 animate-pulse" />
+                    <span>Out of Stock / Sold Out</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center space-x-1 rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700 shadow-xs">
+                    <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                    <span>In Stock ({product.stockCount !== undefined ? `${product.stockCount} items left` : '10 items left'})</span>
+                  </span>
+                )}
+              </div>
             </div>
             <div className="text-[11px] text-stone-500 italic max-w-xs leading-normal bg-white p-2.5 rounded-xl border border-stone-200/40">
               *All active coupons applied. Official brand warranty and returns apply.
@@ -351,31 +383,43 @@ export default function ProductDetail({
             <div className="mb-6 border-b border-stone-100 pb-5">
               <div className="flex items-center justify-between text-xs font-bold text-stone-700 mb-2.5">
                 <span>SELECT COLOR</span>
-                <span className="text-xs font-medium text-stone-500 uppercase">{selectedColor}</span>
+                <span className="text-xs font-medium text-stone-500 uppercase">{getColorName(selectedColor)}</span>
               </div>
               <div className="flex flex-wrap gap-3">
-                {product.colors.map((col) => (
-                  <button
-                    key={col}
-                    type="button"
-                    title={col}
-                    onClick={() => setSelectedColor(col)}
-                    style={{ backgroundColor: col }}
-                    className={`h-8 w-8 rounded-full border shadow-xs transition-all cursor-pointer relative ${
-                      selectedColor === col
-                        ? 'ring-2 ring-amber-850 ring-offset-2 border-transparent'
-                        : 'border-stone-200 hover:scale-105'
-                    }`}
-                  >
-                    {selectedColor === col && (
-                      <span className="absolute inset-0 flex items-center justify-center">
-                        <span className={`h-2 w-2 rounded-full ${
-                          col.toLowerCase() === '#ffffff' || col.toLowerCase() === 'white' ? 'bg-stone-900' : 'bg-white'
-                        }`} />
-                      </span>
-                    )}
-                  </button>
-                ))}
+                {product.colors.map((col) => {
+                  const isImg = col.startsWith('http') || col.startsWith('/') || col.includes('.') || col.includes('data:image');
+                  return (
+                    <button
+                      key={col}
+                      type="button"
+                      title={getColorName(col)}
+                      onClick={() => setSelectedColor(col)}
+                      style={isImg ? undefined : { backgroundColor: col }}
+                      className={`h-8 w-8 rounded-full border shadow-xs transition-all cursor-pointer relative overflow-hidden flex items-center justify-center bg-slate-50 ${
+                        selectedColor === col
+                          ? 'ring-2 ring-amber-850 ring-offset-2 border-transparent'
+                          : 'border-stone-200 hover:scale-105'
+                      }`}
+                    >
+                      {isImg ? (
+                        <img src={col} alt={getColorName(col)} className="h-full w-full object-cover rounded-full" referrerPolicy="no-referrer" />
+                      ) : (
+                        selectedColor === col && (
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <span className={`h-2 w-2 rounded-full ${
+                              col.toLowerCase() === '#ffffff' || col.toLowerCase() === 'white' ? 'bg-stone-900' : 'bg-white'
+                            }`} />
+                          </span>
+                        )
+                      )}
+                      {isImg && selectedColor === col && (
+                        <span className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <Check className="h-4 w-4 text-white stroke-[3px]" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -421,11 +465,16 @@ export default function ProductDetail({
               {/* Add to Bag solid button */}
               <button
                 type="button"
+                disabled={product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0)}
                 onClick={() => onAddToCart && onAddToCart(product, selectedSize)}
-                className="flex w-full items-center justify-center space-x-2.5 rounded-2xl bg-amber-800 hover:bg-amber-950 py-4 text-center text-xs font-bold uppercase tracking-wider text-white shadow-lg transition-all cursor-pointer hover:scale-[1.01]"
+                className={`flex w-full items-center justify-center space-x-2.5 rounded-2xl py-4 text-center text-xs font-bold uppercase tracking-wider text-white shadow-lg transition-all ${
+                  product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0)
+                    ? 'bg-stone-300 text-stone-500 cursor-not-allowed border border-stone-250'
+                    : 'bg-amber-800 hover:bg-amber-950 hover:scale-[1.01] cursor-pointer'
+                }`}
               >
                 <ShoppingBag className="h-4 w-4 shrink-0" />
-                <span>Add To Bag</span>
+                <span>{product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0) ? 'Sold Out' : 'Add To Bag'}</span>
               </button>
 
               {/* Compare toggle button */}
@@ -451,6 +500,19 @@ export default function ProductDetail({
                 )}
               </button>
             </div>
+
+            {/* AI Price Intelligence button */}
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate('price-tracker', { productId: product.id })}
+                className="flex w-full items-center justify-center space-x-2.5 rounded-2xl bg-stone-950 border border-amber-500/20 hover:border-amber-500/40 hover:bg-black py-3.5 text-center text-xs font-bold uppercase tracking-wider text-amber-500 transition-all cursor-pointer shadow-md"
+                id="detail-btn-price-intelligence"
+              >
+                <TrendingDown className="h-4 w-4 shrink-0 text-amber-500" />
+                <span>View AI Price Intelligence</span>
+              </button>
+            )}
 
             {/* Direct Partner Buy Options Header */}
             {getProductAffiliateButtons(product).length > 0 && (
@@ -867,7 +929,7 @@ export default function ProductDetail({
               {/* Add Review Form */}
               <div className="lg:col-span-8 bg-[#faf9f6] border border-stone-200/50 rounded-2xl p-6">
                 <h4 className="font-display font-bold text-slate-900 text-base mb-1">Have you purchased this item?</h4>
-                <p className="text-xs text-slate-500 font-light mb-4">Share your honest feedback. Help the Alankariya community choose wisely.</p>
+                <p className="text-xs text-slate-500 font-light mb-4">Share your honest feedback. Help the Alankapriya community choose wisely.</p>
                 
                 {reviewSubmitSuccess ? (
                   <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 text-xs font-bold flex items-center space-x-2">

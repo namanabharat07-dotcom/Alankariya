@@ -46,6 +46,8 @@ export interface Product {
   communityExpertSummary?: string;
   recommendationNotes?: string;
   retailers?: { name: string; price: number; url: string; lastUpdated?: string }[];
+  stockCount?: number;
+  inStock?: boolean;
 }
 
 export type PostType = 'blog' | 'guide';
@@ -163,6 +165,31 @@ export interface WatchlistItem {
   targetPrice: number;
   notificationsEnabled: boolean;
   dateAdded: string;
+  // Feature 3 Part 3 additions:
+  percentageDropTrigger?: number; // percentage drop (e.g., 5, 10, 15)
+  backInStockAlert?: boolean;     // track back in stock
+  priceIncreaseAlert?: boolean;   // track price increase
+  alertHistory?: {
+    id: string;
+    type: 'price_drop' | 'target_reached' | 'back_in_stock' | 'price_increased' | 'expired';
+    oldPrice?: number;
+    newPrice: number;
+    timestamp: string;
+    message: string;
+  }[];
+}
+
+export interface AlertNotification {
+  id: string;
+  userId: string;
+  productId: string;
+  type: 'price_drop' | 'target_reached' | 'deal_available' | 'back_in_stock' | 'price_increased' | 'expired';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  oldPrice?: number;
+  newPrice?: number;
 }
 
 export interface PriceHistoryItem {

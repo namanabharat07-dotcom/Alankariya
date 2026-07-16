@@ -172,8 +172,8 @@ async function triggerWelcomeCampaign(email: string, token: string): Promise<voi
   const campaign: MarketingCampaign = {
     id: campaignId,
     title: 'Welcome New Subscriber',
-    subject: '🌸 Welcome to Alankariya – Timeless Style Awaits!',
-    content: `Thank you for subscribing to Alankariya! Discover the finest curated tech, home gadgets, and lifestyle recommendations. We compare options so you buy with total confidence. Please click here to verify your email and unlock premium deal updates: ${verificationLink}`,
+    subject: '🌸 Welcome to Alankapriya – Timeless Style Awaits!',
+    content: `Thank you for subscribing to Alankapriya! Discover the finest curated tech, home gadgets, and lifestyle recommendations. We compare options so you buy with total confidence. Please click here to verify your email and unlock premium deal updates: ${verificationLink}`,
     type: 'welcome',
     sentCount: 1,
     openCount: 0,
@@ -184,7 +184,7 @@ async function triggerWelcomeCampaign(email: string, token: string): Promise<voi
 
   const bodyHtml = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #f0e6d2; border-radius: 12px; background-color: #fbfaf7;">
-      <h2 style="color: #8c6239; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Welcome to Alankariya</h2>
+      <h2 style="color: #8c6239; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Welcome to Alankapriya</h2>
       <p style="color: #4a5568; font-size: 14px; line-height: 1.6;">Thank you for subscribing! We curate the absolute best tech gadgets, laptop gear, keyboard setups, and lifestyle accessories so you can make informed decisions.</p>
       
       <div style="margin: 25px 0; text-align: center;">
@@ -269,7 +269,7 @@ export async function triggerNewProductCampaign(product: Product): Promise<void>
         </div>
 
         <p style="color: #a0aec0; font-size: 11px; text-align: center; border-top: 1px solid #edf2f7; padding-top: 15px; margin: 0;">
-          Sent automatically by Alankariya. You can <a href="${unsubLink}" style="color: #8c6239; text-decoration: underline;">unsubscribe</a> at any time.
+          Sent automatically by Alankapriya. You can <a href="${unsubLink}" style="color: #8c6239; text-decoration: underline;">unsubscribe</a> at any time.
         </p>
       </div>
     `;
@@ -425,7 +425,7 @@ export async function triggerNewPostCampaign(post: Post): Promise<void> {
         </div>
 
         <p style="color: #9ca3af; font-size: 11px; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 15px; margin: 0;">
-          Sent automatically by Alankariya. You can <a href="${unsubLink}" style="color: #b45309;">unsubscribe</a>.
+          Sent automatically by Alankapriya. You can <a href="${unsubLink}" style="color: #b45309;">unsubscribe</a>.
         </p>
       </div>
     `;
@@ -499,7 +499,7 @@ export async function triggerCouponCampaign(title: string, discount: string, cod
         </div>
 
         <p style="color: #9ca3af; font-size: 11px; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 15px; margin: 0;">
-          Sent automatically by Alankariya. Don't want exclusive discounts? <a href="${unsubLink}" style="color: #b45309;">Unsubscribe</a>.
+          Sent automatically by Alankapriya. Don't want exclusive discounts? <a href="${unsubLink}" style="color: #b45309;">Unsubscribe</a>.
         </p>
       </div>
     `;
@@ -626,7 +626,7 @@ export async function sendManualNewsletter(subject: string, content: string): Pr
         <h2 style="color: #1a202c; font-size: 22px; font-weight: bold; margin-bottom: 15px;">Curator Newsletter</h2>
         <p style="color: #4a5568; font-size: 14px; line-height: 1.6; white-space: pre-wrap; margin-bottom: 25px;">${content}</p>
         <p style="color: #a0aec0; font-size: 11px; text-align: center; border-top: 1px solid #edf2f7; padding-top: 15px; margin: 0;">
-          Sent by Alankariya. You can <a href="${unsubLink}" style="color: #8c6239;">unsubscribe</a> at any time.
+          Sent by Alankapriya. You can <a href="${unsubLink}" style="color: #8c6239;">unsubscribe</a> at any time.
         </p>
       </div>
     `;
@@ -690,7 +690,7 @@ export async function sendRealEmailViaResend(to: string, subject: string, htmlCo
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Alankariya Curation <newsletter@alankariya.com>',
+        from: 'Alankapriya Curation <newsletter@alankapriya.in>',
         to: [to],
         subject,
         html: htmlContent

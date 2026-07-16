@@ -1067,18 +1067,29 @@ export default function ProductComparison({
                       </div>
                     </div>
 
-                    <div className="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between">
-                      <div className="flex flex-col text-left">
-                        <span className="text-[9px] text-stone-400 font-mono">Special Deal</span>
-                        <span className="font-display text-sm font-extrabold text-stone-900">₹{p.price.toLocaleString()}</span>
+                    <div className="pt-4 mt-4 border-t border-stone-100 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col text-left">
+                          <span className="text-[9px] text-stone-400 font-mono">Special Deal</span>
+                          <span className="font-display text-sm font-extrabold text-stone-900">₹{p.price.toLocaleString()}</span>
+                        </div>
+                        
+                        <button
+                          onClick={() => onNavigateToProduct(p.id)}
+                          className="text-[10px] font-mono text-amber-700 hover:text-amber-800 font-bold hover:underline"
+                        >
+                          Explore Detail →
+                        </button>
                       </div>
-                      
-                      <button
-                        onClick={() => onNavigateToProduct(p.id)}
-                        className="text-[10px] font-mono text-amber-700 hover:text-amber-800 font-bold hover:underline"
-                      >
-                        Explore Detail →
-                      </button>
+
+                      {onNavigate && (
+                        <button
+                          onClick={() => onNavigate('price-tracker', { productId: p.id })}
+                          className="w-full text-center py-1.5 px-3 rounded-xl border border-amber-500/20 bg-[#1c1917] hover:bg-black text-[10px] font-mono uppercase tracking-wider font-semibold text-amber-500 transition-all cursor-pointer"
+                        >
+                          AI Price Intelligence
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 );

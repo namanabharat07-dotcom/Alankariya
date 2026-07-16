@@ -96,6 +96,16 @@ service cloud.firestore {
       );
     }
 
+    // Notifications collection: users can manage their own notifications
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null && (
+        resource == null ||
+        resource.data.userId == request.auth.uid ||
+        request.resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+
     // Price History collection: public read, write restricted to admin
     match /price_history/{historyId} {
       allow read: if true;

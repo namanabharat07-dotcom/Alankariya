@@ -3,6 +3,22 @@ import { Star, CheckCircle, Award, ShoppingCart, ArrowLeftRight, Check, Eye, Sho
 import { Product, getProductAffiliateButtons } from '../types';
 import { motion } from 'motion/react';
 
+const getColorName = (col: string): string => {
+  if (!col) return '';
+  if (col.startsWith('http') || col.startsWith('/') || col.includes('.')) {
+    try {
+      const parts = col.split('/');
+      const last = parts[parts.length - 1];
+      const nameWithExt = last.split('?')[0];
+      const name = nameWithExt.split('.')[0];
+      return name.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    } catch (e) {
+      return 'Swatch Photo';
+    }
+  }
+  return col;
+};
+
 interface ProductCardProps {
   key?: string;
   product: Product;
@@ -146,34 +162,46 @@ export default function ProductCard({
           <div className="mb-4">
             <div className="flex items-center justify-between text-[11px] text-stone-500 mb-1.5 font-medium">
               <span>Select Color</span>
-              <span className="font-bold text-stone-700">{selectedColor}</span>
+              <span className="font-bold text-stone-700">{getColorName(selectedColor)}</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {product.colors.map((col) => (
-                <button
-                  key={col}
-                  type="button"
-                  title={col}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedColor(col);
-                  }}
-                  style={{ backgroundColor: col }}
-                  className={`h-6 w-6 rounded-full border shadow-xs transition-all cursor-pointer relative ${
-                    selectedColor === col
-                      ? 'ring-2 ring-amber-800 ring-offset-1 border-transparent'
-                      : 'border-stone-200 hover:scale-105'
-                  }`}
-                >
-                  {selectedColor === col && (
-                    <span className="absolute inset-0 flex items-center justify-center">
-                      <span className={`h-1.5 w-1.5 rounded-full ${
-                        col.toLowerCase() === '#ffffff' || col.toLowerCase() === 'white' ? 'bg-stone-900' : 'bg-white'
-                      }`} />
-                    </span>
-                  )}
-                </button>
-              ))}
+              {product.colors.map((col) => {
+                const isImg = col.startsWith('http') || col.startsWith('/') || col.includes('.') || col.includes('data:image');
+                return (
+                  <button
+                    key={col}
+                    type="button"
+                    title={getColorName(col)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedColor(col);
+                    }}
+                    style={isImg ? undefined : { backgroundColor: col }}
+                    className={`h-6 w-6 rounded-full border shadow-xs transition-all cursor-pointer relative overflow-hidden flex items-center justify-center bg-slate-50 ${
+                      selectedColor === col
+                        ? 'ring-2 ring-amber-800 ring-offset-1 border-transparent'
+                        : 'border-stone-200 hover:scale-105'
+                    }`}
+                  >
+                    {isImg ? (
+                      <img src={col} alt={getColorName(col)} className="h-full w-full object-cover rounded-full" referrerPolicy="no-referrer" />
+                    ) : (
+                      selectedColor === col && (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <span className={`h-1.5 w-1.5 rounded-full ${
+                            col.toLowerCase() === '#ffffff' || col.toLowerCase() === 'white' ? 'bg-stone-900' : 'bg-white'
+                          }`} />
+                        </span>
+                      )
+                    )}
+                    {isImg && selectedColor === col && (
+                      <span className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <Check className="h-3 w-3 text-white stroke-[3px]" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -191,6 +219,18 @@ export default function ProductCard({
             <div className="flex items-center space-x-1 text-[10px] text-emerald-700 font-semibold mt-1">
               <Truck className="h-3 w-3" />
               <span>Free Delivery Tomorrow</span>
+            </div>
+            {/* Stock / Inventory Status */}
+            <div className="mt-1 flex items-center space-x-1 text-[10px]">
+              {product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0) ? (
+                <span className="text-rose-600 font-bold bg-rose-50 px-1.5 py-0.5 rounded-md border border-rose-100">
+                  ⚠️ Out of Stock
+                </span>
+              ) : (
+                <span className="text-emerald-700 font-semibold">
+                  ✓ In Stock ({product.stockCount !== undefined ? `${product.stockCount} available` : '10 available'})
+                </span>
+              )}
             </div>
           </div>
           
@@ -227,16 +267,21 @@ export default function ProductCard({
           {/* Add to Bag Button (Myntra/Flipkart style) */}
           <button
             type="button"
+            disabled={product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0)}
             onClick={(e) => {
               e.stopPropagation();
               if (onAddToCart) {
                 onAddToCart(product, selectedSize);
               }
             }}
-            className="flex items-center justify-center space-x-1.5 rounded-xl border border-amber-800 bg-white text-amber-800 hover:bg-amber-50 px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+            className={`flex items-center justify-center space-x-1.5 rounded-xl border px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${
+              product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0)
+                ? 'border-stone-200 bg-stone-100 text-stone-400 cursor-not-allowed'
+                : 'border-amber-800 bg-white text-amber-800 hover:bg-amber-50 cursor-pointer'
+            }`}
           >
-            <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-amber-800" />
-            <span>Add To Bag</span>
+            <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+            <span>{product.inStock === false || (product.stockCount !== undefined && product.stockCount <= 0) ? 'Sold Out' : 'Add To Bag'}</span>
           </button>
 
           {getProductAffiliateButtons(product).slice(0, 1).map((btn) => {

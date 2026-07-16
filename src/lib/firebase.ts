@@ -10,7 +10,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory, WatchlistItem, PriceHistoryItem, UserProfile, Comparison, NewsletterSubscriber } from '../types';
+import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory, WatchlistItem, PriceHistoryItem, UserProfile, Comparison, NewsletterSubscriber, AlertNotification } from '../types';
 
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -402,6 +402,52 @@ export async function seedInitialDataIfEmpty(
       categories = [...defaultCategories];
     }
 
+    // 6. Price History
+    let priceHistorySnapshot = await getDocs(collection(db, 'price_history'));
+    if (priceHistorySnapshot.empty) {
+      console.log('Seeding price_history collection in Firestore...');
+      const defaultHistory: PriceHistoryItem[] = [];
+      const now = new Date();
+      
+      const seedHistoryForProduct = (productId: string, basePrice: number) => {
+        const historyData = [
+          { monthsAgo: 5, multiplier: 1.12 },
+          { monthsAgo: 4, multiplier: 1.08 },
+          { monthsAgo: 3, multiplier: 1.03 },
+          { monthsAgo: 2, multiplier: 0.92 }, // lowest
+          { monthsAgo: 1, multiplier: 0.98 },
+          { monthsAgo: 0, multiplier: 1.00 } // current
+        ];
+        
+        historyData.forEach((h, idx) => {
+          const date = new Date(now);
+          date.setMonth(now.getMonth() - h.monthsAgo);
+          defaultHistory.push({
+            id: `history-${productId}-${idx}`,
+            productId,
+            retailer: 'Amazon Marketplace',
+            price: Math.round(basePrice * h.multiplier),
+            timestamp: date.toISOString()
+          });
+        });
+      };
+
+      seedHistoryForProduct('prod-1', 398);
+      seedHistoryForProduct('prod-2', 799);
+      seedHistoryForProduct('prod-3', 1299);
+      
+      try {
+        const batch = writeBatch(db);
+        defaultHistory.forEach((hist) => {
+          const docRef = doc(db, 'price_history', hist.id);
+          batch.set(docRef, cleanData(hist));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.warn('Unable to write seed price history to Firestore (visitor permissions), falling back:', err);
+      }
+    }
+
     return { products, posts, faqs, categories };
   } catch (error) {
     console.warn('Soft-handled warning during Firestore database seeding check:', error);
@@ -723,5 +769,87 @@ export async function updateNewsletterSubscriberStatusInFirestore(email: string,
     throw error;
   }
 }
+
+/**
+ * Fetch all notifications for a specific user from Firestore
+ */
+export async function getNotificationsFromFirestore(userId: string): Promise<AlertNotification[]> {
+  try {
+    const colRef = collection(db, 'notifications');
+    const snapshot = await getDocs(colRef);
+    const notifications: AlertNotification[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.userId === userId) {
+        notifications.push({ id: docSnap.id, ...data } as AlertNotification);
+      }
+    });
+    // Sort chronological descending
+    notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return notifications;
+  } catch (error) {
+    console.error('Error fetching notifications from Firestore:', error);
+    return [];
+  }
+}
+
+/**
+ * Save an alert notification to Firestore
+ */
+export async function saveNotificationToFirestore(notification: AlertNotification): Promise<void> {
+  try {
+    const docRef = doc(db, 'notifications', notification.id);
+    await setDoc(docRef, cleanData(notification));
+  } catch (error) {
+    console.error(`Error saving notification ${notification.id} to Firestore:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Mark a notification as read in Firestore
+ */
+export async function markNotificationAsReadInFirestore(notificationId: string): Promise<void> {
+  try {
+    const docRef = doc(db, 'notifications', notificationId);
+    await setDoc(docRef, { read: true }, { merge: true });
+  } catch (error) {
+    console.error(`Error marking notification ${notificationId} as read:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Mark all user notifications as read in Firestore
+ */
+export async function markAllNotificationsAsReadInFirestore(userId: string): Promise<void> {
+  try {
+    const notifications = await getNotificationsFromFirestore(userId);
+    const batch = writeBatch(db);
+    notifications.forEach((n) => {
+      if (!n.read) {
+        const docRef = doc(db, 'notifications', n.id);
+        batch.set(docRef, { read: true }, { merge: true });
+      }
+    });
+    await batch.commit();
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+  }
+}
+
+/**
+ * Delete a notification from Firestore
+ */
+export async function deleteNotificationFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, 'notifications', id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error(`Error deleting notification ${id} from Firestore:`, error);
+    throw error;
+  }
+}
+
 
 

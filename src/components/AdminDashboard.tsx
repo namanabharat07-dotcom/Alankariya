@@ -97,6 +97,8 @@ export default function AdminDashboard({
   // States for Product Edit Form
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedStarProductIds, setSelectedStarProductIds] = useState<string[]>([]);
   const [pForm, setPForm] = useState({
     title: '', brand: '', category: '', description: '', shortDescription: '',
     rating: 4.5, price: 0, originalPrice: 0, isBestSeller: false, isEditorsChoice: false, isDailyStar: false,
@@ -117,7 +119,9 @@ export default function AdminDashboard({
     flipkartPrice: 0,
     flipkartUrlInput: '',
     myntraPrice: 0,
-    myntraUrlInput: ''
+    myntraUrlInput: '',
+    stockCount: 10,
+    inStock: true
   });
 
   // States for Article Edit Form
@@ -234,7 +238,9 @@ export default function AdminDashboard({
       flipkartPrice: 0,
       flipkartUrlInput: '',
       myntraPrice: 0,
-      myntraUrlInput: ''
+      myntraUrlInput: '',
+      stockCount: 10,
+      inStock: true
     });
     setIsProductFormOpen(true);
   };
@@ -256,7 +262,7 @@ export default function AdminDashboard({
       specifications: Object.entries(p.specifications).map(([key, value]) => ({ key, value })),
       affiliateButtons: p.affiliateButtons || [],
       sizesInput: p.sizes ? p.sizes.join(', ') : '',
-      colorsInput: p.colors ? p.colors.join(', ') : '',
+      colorsInput: p.colors ? p.colors.join('\n') : '',
       subcategory: p.subcategory || '',
       aiTagsInput: p.aiTags ? p.aiTags.join(', ') : '',
       communityExpertSummary: p.communityExpertSummary || '',
@@ -266,7 +272,9 @@ export default function AdminDashboard({
       flipkartPrice: p.retailers?.find(r => r.name === 'Flipkart')?.price || p.price || 0,
       flipkartUrlInput: p.retailers?.find(r => r.name === 'Flipkart')?.url || p.flipkartUrl || '',
       myntraPrice: p.retailers?.find(r => r.name === 'Myntra')?.price || 0,
-      myntraUrlInput: p.retailers?.find(r => r.name === 'Myntra')?.url || ''
+      myntraUrlInput: p.retailers?.find(r => r.name === 'Myntra')?.url || '',
+      stockCount: p.stockCount !== undefined ? p.stockCount : 10,
+      inStock: p.inStock !== undefined ? p.inStock : true
     });
     setIsProductFormOpen(true);
   };
@@ -274,7 +282,7 @@ export default function AdminDashboard({
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const parsedImages = pForm.imagesInput.split('\n').map(s => s.trim()).filter(Boolean);
+    const parsedImages = pForm.imagesInput.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
     const parsedFeatures = pForm.keyFeaturesInput.split('\n').map(s => s.trim()).filter(Boolean);
     const parsedPros = pForm.prosInput.split('\n').map(s => s.trim()).filter(Boolean);
     const parsedCons = pForm.consInput.split('\n').map(s => s.trim()).filter(Boolean);
@@ -282,7 +290,7 @@ export default function AdminDashboard({
     const parsedWhoAvoid = pForm.whoAvoidInput.split('\n').map(s => s.trim()).filter(Boolean);
     const parsedTags = pForm.tagsInput.split(',').map(s => s.trim()).filter(Boolean);
     const parsedSizes = pForm.sizesInput.split(',').map(s => s.trim()).filter(Boolean);
-    const parsedColors = pForm.colorsInput.split(',').map(s => s.trim()).filter(Boolean);
+    const parsedColors = pForm.colorsInput.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
     const parsedAiTags = pForm.aiTagsInput.split(',').map(s => s.trim()).filter(Boolean);
 
     const parsedSpecs: Record<string, string> = {};
@@ -353,7 +361,9 @@ export default function AdminDashboard({
       aiTags: parsedAiTags,
       communityExpertSummary: pForm.communityExpertSummary,
       recommendationNotes: pForm.recommendationNotes,
-      retailers: constructedRetailers
+      retailers: constructedRetailers,
+      stockCount: Number(pForm.stockCount),
+      inStock: pForm.inStock
     };
 
     let updatedList;
@@ -371,6 +381,16 @@ export default function AdminDashboard({
     if (window.confirm('Are you absolutely sure you want to delete this product?')) {
       const updated = products.filter(p => p.id !== productId);
       onUpdateProducts(updated);
+      setSelectedProductIds(prev => prev.filter(id => id !== productId));
+    }
+  };
+
+  const handleDeleteSelectedProducts = () => {
+    if (selectedProductIds.length === 0) return;
+    if (window.confirm(`Are you absolutely sure you want to delete the ${selectedProductIds.length} selected products?`)) {
+      const updated = products.filter(p => !selectedProductIds.includes(p.id));
+      onUpdateProducts(updated);
+      setSelectedProductIds([]);
     }
   };
 
@@ -399,7 +419,7 @@ export default function AdminDashboard({
     setPostForm({
       title: '', postType: 'blog', summary: '', content: '',
       image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80',
-      category: categories[0]?.name || 'Fashion', author: 'Alankariya Curator', readTime: '5 min read',
+      category: categories[0]?.name || 'Fashion', author: 'Alankapriya Curator', readTime: '5 min read',
       tagsInput: 'Style, Curation', relatedProductIdsInput: ''
     });
     setIsPostFormOpen(true);
@@ -542,6 +562,21 @@ export default function AdminDashboard({
         order: index
       }));
       onUpdateStarProducts(updated);
+      setSelectedStarProductIds(prev => prev.filter(id => id !== starId));
+    }
+  };
+
+  const handleDeleteSelectedStarProducts = () => {
+    if (selectedStarProductIds.length === 0) return;
+    if (window.confirm(`Are you absolutely sure you want to delete the ${selectedStarProductIds.length} selected star products?`)) {
+      const updated = starProducts
+        .filter(s => !selectedStarProductIds.includes(s.id))
+        .map((item, index) => ({
+          ...item,
+          order: index
+        }));
+      onUpdateStarProducts(updated);
+      setSelectedStarProductIds([]);
     }
   };
 
@@ -679,7 +714,7 @@ export default function AdminDashboard({
       <div className="mb-8 border-b border-stone-100 pb-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <span className="font-sans text-[10px] font-extrabold uppercase text-amber-800 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded">
-            Alankariya Affiliate Center
+            Alankapriya Affiliate Center
           </span>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-stone-900 mt-1">
             Admin Management Console
@@ -871,73 +906,136 @@ export default function AdminDashboard({
             </button>
           </div>
 
+          {/* Bulk Action Bar */}
+          {selectedProductIds.length > 0 && (
+            <div className="flex items-center justify-between p-3 bg-red-50 border border-red-100 rounded-xl text-xs animate-in fade-in slide-in-from-top-2 duration-200">
+              <span className="font-semibold text-red-800">
+                ⚠️ {selectedProductIds.length} product{selectedProductIds.length > 1 ? 's' : ''} selected.
+              </span>
+              <button
+                type="button"
+                onClick={handleDeleteSelectedProducts}
+                className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 shadow-sm cursor-pointer"
+              >
+                <Trash className="h-3.5 w-3.5" />
+                <span>Remove Selected Products</span>
+              </button>
+            </div>
+          )}
+
           {/* Product Items Table list */}
-          <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm" id="admin-products-table">
+          <div className="rounded-2xl border border-slate-100 bg-white overflow-x-auto shadow-sm" id="admin-products-table">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
+                  <th className="p-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={products.length > 0 && selectedProductIds.length === products.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedProductIds(products.map(p => p.id));
+                        } else {
+                          setSelectedProductIds([]);
+                        }
+                      }}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                    />
+                  </th>
                   <th className="p-4">Item</th>
                   <th className="p-4">Brand / Cat</th>
+                  <th className="p-4">Inventory / Stock</th>
                   <th className="p-4">Rating</th>
                   <th className="p-4">Prices</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-slate-100">
-                {products.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/50">
-                    <td className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <img 
-                          src={p.images[0]} 
-                          alt={p.title} 
-                          referrerPolicy="no-referrer"
-                          className="h-10 w-10 rounded-lg object-cover bg-slate-100 shrink-0"
+                {products.map((p) => {
+                  const isSelected = selectedProductIds.includes(p.id);
+                  return (
+                    <tr key={p.id} className={`hover:bg-slate-50/50 transition-colors ${isSelected ? 'bg-blue-50/20' : ''}`}>
+                      <td className="p-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProductIds(prev => [...prev, p.id]);
+                            } else {
+                              setSelectedProductIds(prev => prev.filter(id => id !== p.id));
+                            }
+                          }}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
                         />
-                        <div className="max-w-xs sm:max-w-md">
-                          <p className="font-bold text-slate-900 truncate">{p.title}</p>
-                          <div className="flex space-x-2 mt-0.5">
-                            {p.isBestSeller && <span className="text-[9px] bg-amber-500 text-white font-bold px-1 rounded uppercase">Best</span>}
-                            {p.isEditorsChoice && <span className="text-[9px] bg-blue-600 text-white font-bold px-1 rounded uppercase">Editor</span>}
-                            {p.isDailyStar && <span className="text-[9px] bg-amber-800 text-white font-bold px-1.5 py-0.5 rounded uppercase">★ Star</span>}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <img 
+                            src={p.images[0]} 
+                            alt={p.title} 
+                            referrerPolicy="no-referrer"
+                            className="h-10 w-10 rounded-lg object-cover bg-slate-100 shrink-0"
+                          />
+                          <div className="max-w-xs sm:max-w-md">
+                            <p className="font-bold text-slate-900 truncate">{p.title}</p>
+                            <div className="flex space-x-2 mt-0.5">
+                              {p.isBestSeller && <span className="text-[9px] bg-amber-500 text-white font-bold px-1 rounded uppercase">Best</span>}
+                              {p.isEditorsChoice && <span className="text-[9px] bg-blue-600 text-white font-bold px-1 rounded uppercase">Editor</span>}
+                              {p.isDailyStar && <span className="text-[9px] bg-amber-800 text-white font-bold px-1.5 py-0.5 rounded uppercase">★ Star</span>}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-bold text-slate-700">{p.brand}</p>
-                      <p className="text-slate-400 text-[10px]">{p.category}</p>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center text-amber-500 font-bold">
-                        <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500 mr-1" />
-                        <span>{p.rating}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-extrabold text-slate-900">${p.price}</p>
-                      {p.originalPrice > p.price && <p className="text-slate-400 text-[10px] line-through">${p.originalPrice}</p>}
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end space-x-1.5">
-                        <button
-                          onClick={() => handleOpenEditProduct(p)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 hover:border-blue-500 hover:text-blue-600 bg-white text-slate-500 transition-colors"
-                          title="Edit product"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(p.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 hover:border-red-500 hover:text-red-600 bg-white text-slate-500 transition-colors"
-                          title="Delete product"
-                        >
-                          <Trash className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="p-4">
+                        <p className="font-bold text-slate-700">{p.brand}</p>
+                        <p className="text-slate-400 text-[10px]">{p.category}</p>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col space-y-1">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold w-fit ${
+                            p.inStock !== false && (p.stockCount === undefined || p.stockCount > 0)
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                              : 'bg-rose-50 text-rose-700 border border-rose-100'
+                          }`}>
+                            {p.inStock !== false && (p.stockCount === undefined || p.stockCount > 0) ? '● In Stock' : '○ Out of Stock'}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500">
+                            Qty: {p.stockCount !== undefined ? p.stockCount : '10'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center text-amber-500 font-bold">
+                          <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500 mr-1" />
+                          <span>{p.rating}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-extrabold text-slate-900">${p.price}</p>
+                        {p.originalPrice > p.price && <p className="text-slate-400 text-[10px] line-through">${p.originalPrice}</p>}
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end space-x-1.5">
+                          <button
+                            onClick={() => handleOpenEditProduct(p)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 hover:border-blue-500 hover:text-blue-600 bg-white text-slate-500 transition-colors cursor-pointer"
+                            title="Edit product"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 hover:border-red-500 hover:text-red-600 bg-white text-slate-500 transition-colors cursor-pointer"
+                            title="Delete product"
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1223,6 +1321,22 @@ export default function AdminDashboard({
             </button>
           </div>
 
+          {selectedStarProductIds.length > 0 && (
+            <div className="flex items-center justify-between p-3 bg-red-50 border border-red-100 rounded-xl text-xs animate-in fade-in slide-in-from-top-2 duration-200">
+              <span className="font-semibold text-red-800">
+                ⚠️ {selectedStarProductIds.length} star product{selectedStarProductIds.length > 1 ? 's' : ''} selected.
+              </span>
+              <button
+                type="button"
+                onClick={handleDeleteSelectedStarProducts}
+                className="bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 shadow-sm cursor-pointer"
+              >
+                <Trash className="h-3.5 w-3.5" />
+                <span>Remove Selected Star Products</span>
+              </button>
+            </div>
+          )}
+
           {starProducts.length === 0 ? (
             <div className="text-center py-16 border border-dashed border-stone-200 bg-stone-50/50 rounded-2xl">
               <Star className="h-10 w-10 text-stone-300 mx-auto mb-3 animate-pulse" />
@@ -1234,6 +1348,20 @@ export default function AdminDashboard({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-stone-50 text-stone-500 font-sans text-[10px] font-extrabold uppercase tracking-widest border-b border-stone-200">
+                    <th className="px-6 py-4 w-10">
+                      <input
+                        type="checkbox"
+                        checked={starProducts.length > 0 && selectedStarProductIds.length === starProducts.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStarProductIds(starProducts.map(s => s.id));
+                          } else {
+                            setSelectedStarProductIds([]);
+                          }
+                        }}
+                        className="rounded border-stone-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                      />
+                    </th>
                     <th className="px-6 py-4">Item details</th>
                     <th className="px-6 py-4">Badge type</th>
                     <th className="px-6 py-4">Original / Deal Price</th>
@@ -1246,8 +1374,24 @@ export default function AdminDashboard({
                 <tbody className="divide-y divide-stone-100 text-xs text-stone-600">
                   {starProducts.map((star, idx) => {
                     const discount = star.discountPercentage || calculateDiscountPercent(star.originalPrice, star.discountedPrice);
+                    const isSelected = selectedStarProductIds.includes(star.id);
                     return (
-                      <tr key={star.id} className="hover:bg-stone-50/50 transition-colors">
+                      <tr key={star.id} className={`hover:bg-stone-50/50 transition-colors ${isSelected ? 'bg-blue-50/20' : ''}`}>
+                        {/* Checkbox column */}
+                        <td className="px-6 py-4 w-10">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedStarProductIds(prev => [...prev, star.id]);
+                              } else {
+                                setSelectedStarProductIds(prev => prev.filter(id => id !== star.id));
+                              }
+                            }}
+                            className="rounded border-stone-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                          />
+                        </td>
                         {/* Title & Image */}
                         <td className="px-6 py-4 font-medium text-stone-900 max-w-[280px]">
                           <div className="flex items-center space-x-3">
@@ -2172,6 +2316,57 @@ export default function AdminDashboard({
                 )}
               </div>
 
+              {/* Product Inventory & Stock Control */}
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <h4 className="font-display font-bold text-xs text-slate-600 uppercase tracking-wider mb-3">
+                  📦 Inventory & Stock Control
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-slate-500 mb-1 font-bold">
+                      Stock Status
+                    </label>
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setPForm({ ...pForm, inStock: true })}
+                        className={`flex-1 py-2 px-3 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                          pForm.inStock
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        In Stock
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPForm({ ...pForm, inStock: false })}
+                        className={`flex-1 py-2 px-3 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                          !pForm.inStock
+                            ? 'bg-rose-600 text-white border-rose-600'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        Out of Stock
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-slate-500 mb-1 font-bold">
+                      Available Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={pForm.stockCount}
+                      onChange={e => setPForm({ ...pForm, stockCount: Math.max(0, parseInt(e.target.value) || 0) })}
+                      className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs outline-none focus:border-blue-500"
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Product Variations (Owner Dashboard Control) */}
               <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                 <h4 className="font-display font-bold text-xs text-slate-600 uppercase tracking-wider mb-3">
@@ -2179,7 +2374,7 @@ export default function AdminDashboard({
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                    <label className="block text-[10px] font-mono uppercase text-slate-500 mb-1 font-bold">
                       Available Sizes (comma-separated, e.g., S, M, L, XL or 13-inch, 15-inch)
                     </label>
                     <input
@@ -2190,15 +2385,38 @@ export default function AdminDashboard({
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
-                      Available Colors (comma-separated solid colors, e.g., Black, White, Red or #000000, #FFFFFF)
+                    <label className="block text-[10px] font-mono uppercase text-slate-500 mb-1 font-bold">
+                      Available Colors / Swatches (one per line: solid color name/hex, or Color Swatch Image URL)
                     </label>
-                    <input
-                      type="text"
+                    <textarea
+                      rows={3}
                       value={pForm.colorsInput} onChange={e => setPForm({ ...pForm, colorsInput: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs outline-none focus:border-blue-500"
-                      placeholder="e.g. Black, White, Blue, Silver"
+                      className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs outline-none focus:border-blue-500 font-sans"
+                      placeholder="e.g.&#10;Black&#10;#C5A880&#10;https://example.com/rose-gold-swatch.jpg"
                     />
+                    {pForm.colorsInput.trim() && (
+                      <div className="mt-2 bg-white/60 p-1.5 rounded-lg border border-slate-100">
+                        <span className="text-[9px] font-mono text-slate-400 uppercase block mb-1">Live Swatch Previews:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {pForm.colorsInput.split(/[\n,]+/).map(s => s.trim()).filter(Boolean).map((col, idx) => {
+                            const isImg = col.startsWith('http') || col.startsWith('/') || col.includes('.') || col.includes('data:image');
+                            return (
+                              <div
+                                key={idx}
+                                title={col}
+                                className="h-6 w-6 rounded-full border border-slate-200 shadow-xs relative overflow-hidden flex items-center justify-center bg-stone-50 shrink-0"
+                              >
+                                {isImg ? (
+                                  <img src={col} alt="color swatch" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <div style={{ backgroundColor: col }} className="h-full w-full" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2296,13 +2514,28 @@ export default function AdminDashboard({
               {/* Multi-line textareas for Lists */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="block font-bold text-slate-500 uppercase mb-1">Image Gallery URLs (one per line)</label>
+                  <label className="block font-bold text-slate-500 uppercase mb-1">Product Images (one per line, first is primary)</label>
                   <textarea
                     rows={3}
                     value={pForm.imagesInput} onChange={e => setPForm({ ...pForm, imagesInput: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 p-2 text-xs outline-none"
-                    placeholder="Enter image URLs..."
+                    className="w-full rounded-xl border border-slate-200 p-2 text-xs outline-none focus:border-blue-500 font-sans"
+                    placeholder="Enter image URLs (one per line)..."
                   />
+                  {pForm.imagesInput.trim() && (
+                    <div className="mt-2 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                      <span className="text-[9px] font-mono text-slate-400 uppercase block mb-1">Live Images Preview (First is Main):</span>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                        {pForm.imagesInput.split(/[\n,]+/).map(s => s.trim()).filter(Boolean).map((imgUrl, idx) => (
+                          <div key={idx} className="relative h-10 w-10 rounded-lg border border-slate-200 overflow-hidden shrink-0 bg-white shadow-xs">
+                            <img src={imgUrl} alt={`preview ${idx}`} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                            <span className="absolute bottom-0 right-0 bg-slate-900/70 text-[7px] font-mono text-white px-0.5 rounded-tl-sm scale-90 origin-bottom-right">
+                              {idx === 0 ? 'Main' : `#${idx}`}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block font-bold text-slate-500 uppercase mb-1">Key Selling Features (one per line)</label>
@@ -2333,20 +2566,36 @@ export default function AdminDashboard({
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-5 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setIsProductFormOpen(false)}
-                  className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/10 transition-colors"
-                >
-                  Save Record
-                </button>
+              <div className="border-t border-slate-100 pt-5 flex justify-between items-center">
+                {editingProduct ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDeleteProduct(editingProduct.id);
+                      setIsProductFormOpen(false);
+                    }}
+                    className="rounded-xl bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 border border-red-200"
+                  >
+                    <span>🗑️ Delete Product</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsProductFormOpen(false)}
+                    className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/10 transition-colors"
+                  >
+                    Save Record
+                  </button>
+                </div>
               </div>
             </form>
           </div>

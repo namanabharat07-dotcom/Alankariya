@@ -21,6 +21,7 @@ interface AIFinderProps {
   onClearInitialQuery?: () => void;
   compareList?: string[];
   onToggleCompare?: (productId: string) => void;
+  onNavigate?: (page: string, params?: Record<string, any>) => void;
 }
 
 // Helper to resolve metrics dynamically for custom products from Firestore
@@ -78,7 +79,8 @@ export default function AIFinder({
   initialQuery, 
   onClearInitialQuery,
   compareList = [],
-  onToggleCompare
+  onToggleCompare,
+  onNavigate
 }: AIFinderProps) {
   // Main states
   const [query, setQuery] = useState('');
@@ -1934,6 +1936,16 @@ export default function AIFinder({
                               >
                                 <Info className="h-4 w-4" />
                                 <span>Full Specs Page</span>
+                              </button>
+                            )}
+
+                            {/* Price Intelligence shortcut */}
+                            {product.dbProductId && onNavigate && (
+                              <button
+                                onClick={() => onNavigate('price-tracker', { productId: product.dbProductId })}
+                                className="inline-flex items-center space-x-1 py-2 px-3.5 rounded-xl border border-amber-500/25 bg-[#1c1917] hover:bg-black text-xs font-bold uppercase tracking-wider text-amber-500 transition-colors cursor-pointer"
+                              >
+                                <span>Price Trends</span>
                               </button>
                             )}
                           </div>

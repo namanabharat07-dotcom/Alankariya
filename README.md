@@ -1,6 +1,6 @@
-# Alankariya (Alankapriya) – Premium AI-Powered Shopping Assistant
+# Alankapriya – Premium AI-Powered Shopping Assistant
 
-Alankariya is a high-end, elegant, and intelligent shopping assistant designed to build buyer confidence and guide consumers to the perfect purchasing decisions. Combining elegant typography, fluid transitions, and a premium "Apple-style" AI welcome experience, Alankariya is optimized for modern web devices with native Firestore integration, real-time product comparisons, and AI-curated product universes.
+Alankapriya is a high-end, elegant, and intelligent shopping assistant designed to build buyer confidence and guide consumers to the perfect purchasing decisions. Combining elegant typography, fluid transitions, and a premium "Apple-style" AI welcome experience, Alankapriya is optimized for modern web devices with native Firestore integration, real-time product comparisons, and AI-curated product universes.
 
 ---
 
@@ -28,8 +28,8 @@ npm install -g firebase-tools
 
 Clone the repository and install dependencies:
 ```bash
-git clone https://github.com/namanabharat07-dotcom/Alankariya.git
-cd Alankariya
+git clone https://github.com/namanabharat07-dotcom/Alankapriya.git
+cd Alankapriya
 npm install
 ```
 

@@ -61,14 +61,7 @@ export default function App() {
   const [starProducts, setStarProducts] = useState<StarProduct[]>([]);
 
   // --- Premium Welcome Experience State ---
-  const [showWelcome, setShowWelcome] = useState(() => {
-    try {
-      const viewed = localStorage.getItem('alankapriya_intro_seen');
-      return viewed !== 'true';
-    } catch (e) {
-      return true;
-    }
-  });
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const placeholders = [
     "What are you looking to buy today?",
@@ -141,6 +134,7 @@ export default function App() {
   // --- Dynamic Routing ---
   const [currentPage, setCurrentPage] = useState<string>('home');
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
+  const [priceIntelProductId, setPriceIntelProductId] = useState<string | null>(null);
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [postTypeFilter, setPostTypeFilter] = useState<'all' | 'blog' | 'guide'>('all');
   const [aiFinderPreQuery, setAiFinderPreQuery] = useState('');
@@ -213,9 +207,6 @@ export default function App() {
             const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
             window.history.replaceState({}, document.title, newUrl);
           }
-          if (!currentUser) {
-            setIsAuthModalOpen(true);
-          }
         } else {
           setCurrentPage('admin');
         }
@@ -226,9 +217,6 @@ export default function App() {
 
     if (currentPage === 'admin' && !isAdmin) {
       setCurrentPage('home');
-      if (!currentUser) {
-        setIsAuthModalOpen(true);
-      }
     }
 
     window.addEventListener('hashchange', checkAdminRoute);
@@ -237,7 +225,7 @@ export default function App() {
 
   // Show push notification prompt on first visit after 3.5 seconds
   useEffect(() => {
-    const promptSeen = localStorage.getItem('alankariya_push_prompt_seen');
+    const promptSeen = localStorage.getItem('alankapriya_push_prompt_seen');
     if (!promptSeen) {
       const timer = setTimeout(() => {
         setShowPushPrompt(true);
@@ -248,7 +236,7 @@ export default function App() {
 
   const handleAcceptPush = async () => {
     setShowPushPrompt(false);
-    localStorage.setItem('alankariya_push_prompt_seen', 'true');
+    localStorage.setItem('alankapriya_push_prompt_seen', 'true');
     try {
       const { requestBrowserNotification } = await import('./lib/marketing');
       const { permission } = await requestBrowserNotification();
@@ -259,7 +247,7 @@ export default function App() {
         });
         // Trigger local test welcome push notification
         const { triggerLocalBrowserPushNotification } = await import('./lib/marketing');
-        triggerLocalBrowserPushNotification('🌸 Welcome to Alankariya Alerts!', 'You will now receive automatic price drop notifications and new curated product arrivals!');
+        triggerLocalBrowserPushNotification('🌸 Welcome to Alankapriya Alerts!', 'You will now receive automatic price drop notifications and new curated product arrivals!');
       }
     } catch (e) {
       console.warn('Browser Notification prompt failed inside iframe context', e);
@@ -268,7 +256,7 @@ export default function App() {
 
   const handleDeclinePush = () => {
     setShowPushPrompt(false);
-    localStorage.setItem('alankariya_push_prompt_seen', 'true');
+    localStorage.setItem('alankapriya_push_prompt_seen', 'true');
   };
 
   // --- Catalog Filters state ---
@@ -294,7 +282,7 @@ export default function App() {
   // --- Cart State (E-commerce Amazon/Myntra Style) ---
   const [cartItems, setCartItems] = useState<{ product: Product; quantity: number; selectedSize?: string }[]>(() => {
     try {
-      const saved = localStorage.getItem('alankariya_cart');
+      const saved = localStorage.getItem('alankapriya_cart');
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       return [];
@@ -303,7 +291,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('alankariya_cart', JSON.stringify(cartItems));
+    localStorage.setItem('alankapriya_cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
   const handleAddToCart = (product: Product, size?: string) => {
@@ -707,13 +695,23 @@ export default function App() {
   // --- Nav Helpers ---
   const handleNavigate = (page: string, params?: Record<string, any>) => {
     setSearchQuery(''); // clear query on navigation
+    
+    // Protect routes: Watchlist, Price Alerts (price-tracker), Profile/History (history)
+    const protectedPages = ['watchlist', 'price-tracker', 'history'];
+    if (protectedPages.includes(page) && !currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     if (page === 'admin' && !isAdmin) {
       alert('Access Denied: You do not have administrator permissions.');
       setCurrentPage('home');
       return;
     }
     setCurrentPage(page);
-    if (page === 'product' && params?.id) {
+    if (page === 'price-tracker') {
+      setPriceIntelProductId(params?.productId || null);
+    } else if (page === 'product' && params?.id) {
       setActiveProductId(params.id);
     } else if (page === 'blog' && params?.id) {
       setActivePostId(params.id);
@@ -1794,6 +1792,7 @@ export default function App() {
                 onNavigateToProduct={(id) => handleNavigate('product', { id })}
                 compareList={compareList}
                 onToggleCompare={handleToggleCompare}
+                onNavigate={handleNavigate}
               />
             </motion.div>
           )}
@@ -1886,6 +1885,10 @@ export default function App() {
                 allProducts={data.products}
                 onOpenAuth={() => setIsAuthModalOpen(true)}
                 onNavigate={handleNavigate}
+                preSelectedProductId={priceIntelProductId}
+                onClearPreSelected={() => setPriceIntelProductId(null)}
+                compareList={compareList}
+                onToggleCompare={handleToggleCompare}
               />
             </motion.div>
           )}

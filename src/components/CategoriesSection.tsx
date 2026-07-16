@@ -89,6 +89,35 @@ export default function CategoriesSection({ onSelectCategory, onNavigate }: Cate
         </p>
       </div>
 
+      {/* Price Intelligence Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12 p-6 rounded-3xl bg-[#1c1917] border border-amber-500/20 shadow-md flex flex-col md:flex-row items-center justify-between gap-4 text-left"
+        id="categories-price-intelligence-banner"
+      >
+        <div className="flex items-start space-x-4">
+          <div className="h-11 w-11 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="font-display font-bold text-sm text-white">AI Price Intelligence Dashboard</h4>
+            <p className="text-stone-400 text-xs mt-0.5 font-light leading-relaxed">
+              Analyze historical marketplace prices, detect recent drops, and receive real-time purchase recommendations.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate('price-tracker');
+          }}
+          className="rounded-xl bg-amber-700 hover:bg-amber-800 text-[#faf9f6] text-xs font-mono uppercase font-bold tracking-wider px-4 py-2.5 transition-colors cursor-pointer shrink-0 border border-amber-600/30 shadow-sm"
+        >
+          Open Dashboard →
+        </button>
+      </motion.div>
+
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="categories-grid">
         {CATEGORIES_LIST.map((cat, idx) => {

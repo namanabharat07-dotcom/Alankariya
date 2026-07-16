@@ -256,7 +256,7 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
         <div className="border-t border-amber-100/40 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4" id="footer-copyright-container">
           <div className="text-center md:text-left space-y-2 max-w-2xl">
             <p className="font-light">
-              © {new Date().getFullYear()} Alankariya. All rights reserved.
+              © {new Date().getFullYear()} Alankapriya. All rights reserved.
             </p>
             <p className="leading-relaxed text-[11px] text-slate-400 font-light">
               <strong className="text-slate-500 font-medium">Affiliate Disclosure:</strong> We may earn a small commission when you buy through our links, at no extra cost to you. This helps us continue reviewing products independently.
