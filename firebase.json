@@ -22,7 +22,10 @@
       }
     ]
   },
-  "firestore": {
-    "rules": "firestore.rules"
-  }
+  "firestore": [
+    {
+      "database": "ai-studio-affiliatemarketi-5f44e65e-dc52-433e-bb36-2db94fe16f20",
+      "rules": "firestore.rules"
+    }
+  ]
 }
