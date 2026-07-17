@@ -340,10 +340,41 @@ export default function AdminDashboard({
         body: JSON.stringify({ url: importUrl.trim() })
       });
 
-      const data = await response.json();
       timers.forEach(clearTimeout);
 
-      if (!response.ok || !data.success) {
+      const contentType = response.headers.get('content-type') || '';
+      if (!response.ok) {
+        let errorMsg = `Server error (HTTP status: ${response.status} ${response.statusText})`;
+        if (contentType.includes('application/json')) {
+          try {
+            const errData = await response.json();
+            errorMsg = errData.error || errorMsg;
+          } catch (_) {}
+        } else {
+          try {
+            const textBody = await response.text();
+            errorMsg += `. Response body: ${textBody.slice(0, 300)}`;
+          } catch (_) {}
+        }
+        throw new Error(errorMsg);
+      }
+
+      if (!contentType.includes('application/json')) {
+        let textBody = '';
+        try {
+          textBody = await response.text();
+        } catch (_) {}
+        throw new Error(`Expected JSON response from server but received Content-Type "${contentType}" (HTTP status: ${response.status}). Response body: ${textBody.slice(0, 300)}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr: any) {
+        throw new Error(`Failed to parse JSON response: ${jsonErr.message}`);
+      }
+
+      if (!data.success) {
         throw new Error(data.error || 'Failed to import product details. Check your connection or API configuration.');
       }
 
@@ -444,8 +475,39 @@ export default function AdminDashboard({
         })
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
+      const contentType = response.headers.get('content-type') || '';
+      if (!response.ok) {
+        let errorMsg = `Server error (HTTP status: ${response.status} ${response.statusText})`;
+        if (contentType.includes('application/json')) {
+          try {
+            const errData = await response.json();
+            errorMsg = errData.error || errorMsg;
+          } catch (_) {}
+        } else {
+          try {
+            const textBody = await response.text();
+            errorMsg += `. Response body: ${textBody.slice(0, 300)}`;
+          } catch (_) {}
+        }
+        throw new Error(errorMsg);
+      }
+
+      if (!contentType.includes('application/json')) {
+        let textBody = '';
+        try {
+          textBody = await response.text();
+        } catch (_) {}
+        throw new Error(`Expected JSON response from server but received Content-Type "${contentType}" (HTTP status: ${response.status}). Response body: ${textBody.slice(0, 300)}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr: any) {
+        throw new Error(`Failed to parse JSON response: ${jsonErr.message}`);
+      }
+
+      if (!data.success) {
         throw new Error(data.error || 'OpenAI Optimization failed.');
       }
 
