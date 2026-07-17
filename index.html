@@ -3,11 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>Alankapriya Shopping Assistant</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9991VP9TL7"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function() {
+        window.dataLayer.push(arguments);
+      };
+      window.gtag('js', new Date());
+
+      // Configure Google Analytics with the specific Measurement ID
+      window.gtag('config', 'G-9991VP9TL7', {
+        send_page_view: true,
+        cookie_flags: 'max-age=7200;Secure;SameSite=None' // Ensure it works inside sandboxed iframes
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

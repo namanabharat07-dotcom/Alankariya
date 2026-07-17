@@ -27,6 +27,14 @@ import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth
 import AuthModal from './components/AuthModal';
 import { Product, Post, FAQItem, AnalyticsEvent, StarProduct, ProductCategory } from './types';
 import { updateSEOMetadata } from './utils/seo';
+import { 
+  trackPageView, 
+  trackProductView, 
+  trackSearch, 
+  trackComparison, 
+  trackAffiliateClick, 
+  trackOutboundClick 
+} from './utils/analytics';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProductCard from './components/ProductCard';
@@ -627,6 +635,25 @@ export default function App() {
     }
     // Record asynchronously to Firestore database
     saveAnalyticsEventToFirestore(newEvt);
+
+    // --- Google Analytics 4 Custom Trackers ---
+    if (type === 'page_view') {
+      if (currentPage === 'product' && targetId) {
+        const prod = data.products.find(p => p.id === targetId);
+        if (prod) {
+          trackProductView(prod.id, prod.title, prod.category, prod.price);
+        }
+        trackPageView(targetName || 'Product Detail', `/product/${targetId}`);
+      } else if ((currentPage === 'blog' || currentPage === 'guide') && targetId) {
+        trackPageView(targetName || 'Article', `/article/${targetId}`);
+      } else {
+        trackPageView(targetName || currentPage, `/${targetName || currentPage}`);
+      }
+    } else if (type === 'search') {
+      trackSearch(targetName || '');
+    } else if (type === 'compare') {
+      trackComparison(targetName || '');
+    }
   };
 
 
@@ -774,6 +801,10 @@ export default function App() {
     // Log standard analytics event
     logEvent('click_affiliate', productId, prod?.title || productId, network);
     
+    // Track GA4 affiliate button & outbound clicks
+    trackAffiliateClick(productId, prod?.title || productId, network, url);
+    trackOutboundClick(productId, prod?.title || productId, network, url);
+
     // Save clicking details to user's database records in Firestore
     const clickId = `click-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     saveClickingToFirestore({
@@ -800,6 +831,10 @@ export default function App() {
 
     logEvent('click_affiliate', star.id, star.title, 'star_deal');
 
+    // Track GA4 affiliate button & outbound clicks for star product
+    trackAffiliateClick(star.id, star.title, 'star_deal', star.affiliateUrl);
+    trackOutboundClick(star.id, star.title, 'star_deal', star.affiliateUrl);
+
     const clickId = `click-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     saveClickingToFirestore({
       id: clickId,
@@ -824,6 +859,10 @@ export default function App() {
       // Log event
       logEvent('click_affiliate', productId, title, network);
       
+      // Track GA4 affiliate button & outbound clicks for pending action
+      trackAffiliateClick(productId, title, network, url);
+      trackOutboundClick(productId, title, network, url);
+
       // Fetch latest user from firebase auth instance instantly
       const user = auth.currentUser;
       const clickId = `click-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;

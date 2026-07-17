@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
 import { CURATED_PRODUCTS, AICuratedProduct } from '../data/aiCuratedProducts';
+import { trackWatchlistAdd, trackAIFinder } from '../utils/analytics';
 
 interface AIFinderProps {
   products: Product[];
@@ -554,9 +555,18 @@ export default function AIFinder({
 
   const handleToggleWatchlist = (id: string) => {
     setWatchlist(prev => {
-      const updated = prev.includes(id) 
-        ? prev.filter(item => item !== id) 
-        : [...prev, id];
+      const isAdding = !prev.includes(id);
+      const updated = isAdding 
+        ? [...prev, id]
+        : prev.filter(item => item !== id);
+      
+      if (isAdding) {
+        const prod = products.find(p => p.id === id);
+        if (prod) {
+          trackWatchlistAdd(prod.id, prod.title);
+        }
+      }
+      
       localStorage.setItem('ai_shopper_watchlist', JSON.stringify(updated));
       return updated;
     });
@@ -1012,6 +1022,13 @@ export default function AIFinder({
     
     return finalRecommendations.slice(0, 5);
   }, [identifiedCategory, answers, products]);
+
+  // Track AI Product Finder completed usage on results screen load
+  useEffect(() => {
+    if (screenState === 'results') {
+      trackAIFinder(query, identifiedCategory || 'Unknown Category', recommendedProducts.length);
+    }
+  }, [screenState, query, identifiedCategory, recommendedProducts.length]);
 
   const getConfidenceRationale = (product: AICuratedProduct) => {
     const userBudget = getUserBudget();

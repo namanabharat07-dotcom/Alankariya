@@ -121,8 +121,29 @@ export default function AdminDashboard({
     myntraPrice: 0,
     myntraUrlInput: '',
     stockCount: 10,
-    inStock: true
+    inStock: true,
+    otherRetailerName: '',
+    otherRetailerPrice: 0,
+    otherRetailerUrl: ''
   });
+
+  // States for AI Product Importer
+  const [importUrl, setImportUrl] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importStep, setImportStep] = useState('');
+  const [importProgress, setImportProgress] = useState(0);
+  const [importError, setImportError] = useState('');
+  const [aiImportBannerInfo, setAiImportBannerInfo] = useState<{
+    sourceUrl: string;
+    retailerName: string;
+    retailerKey: string;
+    isDuplicate: boolean;
+  } | null>(null);
+
+  // States for premium OpenAI Editorial Optimization
+  const [isOptimizingWithOpenAI, setIsOptimizingWithOpenAI] = useState(false);
+  const [openaiOptimizeError, setOpenaiOptimizeError] = useState('');
+
 
   // States for Article Edit Form
   const [editingPost, setEditingPost] = useState<Post | null>(null);
@@ -210,6 +231,7 @@ export default function AdminDashboard({
   // --- CRUD Handlers for Products ---
   const handleOpenAddProduct = () => {
     setEditingProduct(null);
+    setAiImportBannerInfo(null);
     setPForm({
       title: '', brand: '', category: categories[0]?.name || 'Audio', description: '', shortDescription: '',
       rating: 4.8, price: 99, originalPrice: 129, isBestSeller: false, isEditorsChoice: false, isDailyStar: false,
@@ -240,13 +262,18 @@ export default function AdminDashboard({
       myntraPrice: 0,
       myntraUrlInput: '',
       stockCount: 10,
-      inStock: true
+      inStock: true,
+      otherRetailerName: '',
+      otherRetailerPrice: 0,
+      otherRetailerUrl: ''
     });
     setIsProductFormOpen(true);
   };
 
   const handleOpenEditProduct = (p: Product) => {
     setEditingProduct(p);
+    setAiImportBannerInfo(null);
+    const otherRetailer = p.retailers?.find(r => r.name !== 'Amazon' && r.name !== 'Flipkart' && r.name !== 'Myntra');
     setPForm({
       title: p.title, brand: p.brand, category: p.category, description: p.description, shortDescription: p.shortDescription,
       rating: p.rating, price: p.price, originalPrice: p.originalPrice, isBestSeller: p.isBestSeller, isEditorsChoice: p.isEditorsChoice, isDailyStar: !!p.isDailyStar,
@@ -274,9 +301,169 @@ export default function AdminDashboard({
       myntraPrice: p.retailers?.find(r => r.name === 'Myntra')?.price || 0,
       myntraUrlInput: p.retailers?.find(r => r.name === 'Myntra')?.url || '',
       stockCount: p.stockCount !== undefined ? p.stockCount : 10,
-      inStock: p.inStock !== undefined ? p.inStock : true
+      inStock: p.inStock !== undefined ? p.inStock : true,
+      otherRetailerName: otherRetailer ? otherRetailer.name : '',
+      otherRetailerPrice: otherRetailer ? otherRetailer.price : 0,
+      otherRetailerUrl: otherRetailer ? otherRetailer.url : ''
     });
     setIsProductFormOpen(true);
+  };
+
+  const handleAIImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importUrl.trim()) return;
+
+    setIsImporting(true);
+    setImportError('');
+    setImportProgress(10);
+    setImportStep('🔍 Identifying retailer domain...');
+
+    // Progress checkpoints
+    const progressIntervals = [
+      { delay: 1000, progress: 30, step: '🌐 Triggering Google Search grounding to retrieve public product specifications...' },
+      { delay: 4000, progress: 55, step: '✍️ Generating high-quality original SEO editorial content and description...' },
+      { delay: 7500, progress: 80, step: '📋 Analyzing pricing, converting currencies, and populating catalog fields...' },
+      { delay: 10500, progress: 95, step: '✨ Formatting structured metadata...' }
+    ];
+
+    const timers = progressIntervals.map(item => 
+      setTimeout(() => {
+        setImportProgress(item.progress);
+        setImportStep(item.step);
+      }, item.delay)
+    );
+
+    try {
+      const response = await fetch('/api/import-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl.trim() })
+      });
+
+      const data = await response.json();
+      timers.forEach(clearTimeout);
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to import product details. Check your connection or API configuration.');
+      }
+
+      setImportProgress(100);
+      setImportStep('✅ Product curation drafted successfully!');
+
+      // Duplicate Check
+      const isDuplicate = products.some(p => 
+        p.title.toLowerCase().trim() === data.product.title.toLowerCase().trim() ||
+        (data.product.amazonUrlInput && p.amazonUrl === data.product.amazonUrlInput) ||
+        (data.product.flipkartUrlInput && p.flipkartUrl === data.product.flipkartUrlInput)
+      );
+
+      setEditingProduct(null);
+      setPForm({
+        title: data.product.title || '',
+        brand: data.product.brand || '',
+        category: data.product.category || categories[0]?.name || 'Audio',
+        subcategory: data.product.subcategory || '',
+        description: data.product.description || '',
+        shortDescription: data.product.shortDescription || '',
+        rating: data.product.rating !== undefined ? Number(data.product.rating) : 4.8,
+        price: data.product.price !== undefined ? Number(data.product.price) : 99,
+        originalPrice: data.product.originalPrice !== undefined ? Number(data.product.originalPrice) : 129,
+        isBestSeller: !!data.product.isBestSeller,
+        isEditorsChoice: !!data.product.isEditorsChoice,
+        isDailyStar: !!data.product.isDailyStar,
+        amazonUrl: data.product.amazonUrl || '',
+        flipkartUrl: data.product.flipkartUrl || '',
+        overview: data.product.overview || data.product.description || '',
+        performance: data.product.performance || 'Outstanding performance matching elite standards.',
+        verdict: data.product.verdict || 'A brilliant option that is worth every cent.',
+        imagesInput: Array.isArray(data.product.images) ? data.product.images.join('\n') : '',
+        keyFeaturesInput: Array.isArray(data.product.keyFeatures) ? data.product.keyFeatures.join('\n') : '',
+        prosInput: Array.isArray(data.product.pros) ? data.product.pros.join('\n') : '',
+        consInput: Array.isArray(data.product.cons) ? data.product.cons.join('\n') : '',
+        tagsInput: Array.isArray(data.product.tags) ? data.product.tags.join(', ') : '',
+        whoBuyInput: Array.isArray(data.product.whoShouldBuy) ? data.product.whoShouldBuy.join('\n') : '',
+        whoAvoidInput: Array.isArray(data.product.whoShouldAvoid) ? data.product.whoShouldAvoid.join('\n') : '',
+        specifications: Array.isArray(data.product.specifications) ? data.product.specifications : [],
+        affiliateButtons: [],
+        sizesInput: Array.isArray(data.product.sizes) ? data.product.sizes.join(', ') : '',
+        colorsInput: Array.isArray(data.product.colors) ? data.product.colors.join('\n') : '',
+        aiTagsInput: Array.isArray(data.product.aiTags) ? data.product.aiTags.join(', ') : '',
+        communityExpertSummary: data.product.communityExpertSummary || '',
+        recommendationNotes: data.product.recommendationNotes || '',
+        amazonPrice: data.product.amazonPrice !== undefined ? Number(data.product.amazonPrice) : 0,
+        amazonUrlInput: data.product.amazonUrlInput || '',
+        flipkartPrice: data.product.flipkartPrice !== undefined ? Number(data.product.flipkartPrice) : 0,
+        flipkartUrlInput: data.product.flipkartUrlInput || '',
+        myntraPrice: data.product.myntraPrice !== undefined ? Number(data.product.myntraPrice) : 0,
+        myntraUrlInput: data.product.myntraUrlInput || '',
+        stockCount: 10,
+        inStock: true,
+        otherRetailerName: data.product.otherRetailerName || '',
+        otherRetailerPrice: data.product.otherRetailerPrice || 0,
+        otherRetailerUrl: data.product.otherRetailerUrl || ''
+      });
+
+      setAiImportBannerInfo({
+        sourceUrl: importUrl.trim(),
+        retailerName: data.product.retailerName,
+        retailerKey: data.product.retailerKey,
+        isDuplicate
+      });
+
+      setTimeout(() => {
+        setIsProductFormOpen(true);
+        setIsImporting(false);
+        setImportUrl('');
+      }, 800);
+
+    } catch (err: any) {
+      timers.forEach(clearTimeout);
+      setIsImporting(false);
+      setImportError(err.message || 'Error occurred while generating product draft.');
+    }
+  };
+
+  const handleOpenAIOptimize = async () => {
+    if (!pForm.title.trim()) {
+      setOpenaiOptimizeError('Please provide a product title before optimizing.');
+      return;
+    }
+
+    setIsOptimizingWithOpenAI(true);
+    setOpenaiOptimizeError('');
+
+    try {
+      const response = await fetch('/api/openai-generate-editorial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: pForm.title.trim(),
+          brand: pForm.brand.trim(),
+          category: pForm.category,
+          description: pForm.overview || pForm.shortDescription
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'OpenAI Optimization failed.');
+      }
+
+      setPForm(prev => ({
+        ...prev,
+        overview: data.optimizedDescription || prev.overview,
+        shortDescription: data.hook || prev.shortDescription,
+        prosInput: Array.isArray(data.pros) ? data.pros.join('\n') : (typeof data.pros === 'string' ? data.pros : prev.prosInput),
+        consInput: Array.isArray(data.cons) ? data.cons.join('\n') : (typeof data.cons === 'string' ? data.cons : prev.consInput),
+        verdict: data.expertVerdict || prev.verdict
+      }));
+
+    } catch (err: any) {
+      console.error('OpenAI optimization error:', err);
+      setOpenaiOptimizeError(err.message || 'Failed to optimize editorial copy using OpenAI. Check API key configuration.');
+    } finally {
+      setIsOptimizingWithOpenAI(false);
+    }
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
@@ -320,6 +507,14 @@ export default function AdminDashboard({
         name: 'Myntra',
         price: Number(pForm.myntraPrice),
         url: pForm.myntraUrlInput.trim(),
+        lastUpdated: new Date().toISOString()
+      });
+    }
+    if (pForm.otherRetailerName.trim() && (pForm.otherRetailerPrice > 0 || pForm.otherRetailerUrl.trim())) {
+      constructedRetailers.push({
+        name: pForm.otherRetailerName.trim(),
+        price: Number(pForm.otherRetailerPrice),
+        url: pForm.otherRetailerUrl.trim(),
         lastUpdated: new Date().toISOString()
       });
     }
@@ -892,6 +1087,102 @@ export default function AdminDashboard({
       {/* --- TAB 2: PRODUCTS CRUD INVENTORY --- */}
       {activeTab === 'products' && (
         <div className="space-y-6" id="admin-tab-products">
+          {/* AI PRODUCT IMPORT ENGINE */}
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-indigo-500/10 relative overflow-hidden" id="admin-ai-import-panel">
+            <div className="absolute right-0 top-0 -mt-12 -mr-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute left-1/3 bottom-0 -mb-16 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-xl">
+                <div className="flex items-center space-x-2">
+                  <div className="bg-indigo-500/20 text-indigo-300 p-1.5 rounded-xl border border-indigo-500/20">
+                    <Sparkles className="h-4 w-4 animate-pulse text-indigo-400" />
+                  </div>
+                  <h3 className="font-display text-lg font-bold tracking-tight text-white">AI Product Import Engine</h3>
+                  <span className="bg-indigo-500/20 text-indigo-300 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-indigo-500/20">
+                    Enterprise
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Analyze and import affiliate products instantly. Paste a product URL from <span className="text-white font-semibold">Amazon, Flipkart, Myntra, Nykaa, Ajio, H&M, Croma, Reliance Digital, or Tata CLiQ</span> to automatically generate original editorial reviews, populate prices, gather specs, and draft SEO content.
+                </p>
+              </div>
+              
+              <div className="w-full md:w-auto flex-1 max-w-md">
+                <form onSubmit={handleAIImport} className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="url"
+                      required
+                      placeholder="Paste e-commerce product URL..."
+                      value={importUrl}
+                      onChange={(e) => setImportUrl(e.target.value)}
+                      className="w-full text-xs text-slate-100 placeholder-slate-400 bg-slate-900/60 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-2xl p-3.5 pr-10 outline-none transition-all shadow-inner"
+                    />
+                    {importUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setImportUrl('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isImporting}
+                    className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-bold text-xs py-3.5 px-6 rounded-2xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/20 active:scale-95 transition-all flex items-center space-x-2 shrink-0 cursor-pointer"
+                  >
+                    {isImporting ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Generate with AI</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Steps Loading state */}
+            {isImporting && (
+              <div className="mt-5 pt-4 border-t border-slate-800 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                    <span className="flex items-center space-x-2">
+                      <RefreshCw className="h-3 w-3 animate-spin text-indigo-400" />
+                      <span>{importStep}</span>
+                    </span>
+                    <span className="text-indigo-400 font-mono">{importProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500" 
+                      style={{ width: `${importProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error state */}
+            {importError && (
+              <div className="mt-4 p-3 bg-red-950/40 border border-red-500/20 text-red-300 text-xs rounded-xl flex items-start space-x-2 animate-in duration-300">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-bold">Extraction Failed</span>
+                  <p className="leading-relaxed text-red-400/90">{importError}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold text-slate-500 font-mono">
               Total Catalog items: {products.length}
@@ -1911,6 +2202,102 @@ export default function AdminDashboard({
               </button>
             </div>
 
+            {aiImportBannerInfo && (
+              <div className="mb-6 bg-slate-50 border border-slate-150 rounded-2xl p-4 text-xs space-y-3 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100 text-indigo-600 font-bold text-[10px]">
+                      AI
+                    </span>
+                    <span className="font-bold text-slate-800">
+                      AI Generated Draft Review & Validation
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-600 py-0.5 px-2 rounded-full font-mono border border-indigo-100">
+                    Source: {aiImportBannerInfo.retailerName} Link
+                  </span>
+                </div>
+                
+                {/* Warnings / Duplicate alert */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className={`p-3 rounded-xl border flex items-start space-x-2 ${
+                    aiImportBannerInfo.isDuplicate 
+                      ? 'bg-amber-50 border-amber-200 text-amber-800' 
+                      : 'bg-emerald-50 border-emerald-150 text-emerald-800'
+                  }`}>
+                    {aiImportBannerInfo.isDuplicate ? (
+                      <>
+                        <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block">Duplicate Detected!</span>
+                          <span className="text-[11px] leading-relaxed opacity-90">
+                            A product with a matching title or URL is already in your catalog. Saving this will create a duplicate item.
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block">Unique Product</span>
+                          <span className="text-[11px] leading-relaxed opacity-90">
+                            This product URL and title do not exist in the current catalog. Safe to save!
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Quality checklist */}
+                  <div className="bg-white rounded-xl border border-slate-150 p-3 space-y-2">
+                    <span className="font-bold text-slate-700 block">Content Quality Validation Checklist:</span>
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-medium text-slate-500">
+                      <span className="flex items-center space-x-1">
+                        <Check className="h-3 w-3 text-emerald-500 font-bold shrink-0" />
+                        <span>Title Populated</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <Check className="h-3 w-3 text-emerald-500 font-bold shrink-0" />
+                        <span>Brand Extracted</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        {pForm.description.length > 100 ? (
+                          <Check className="h-3 w-3 text-emerald-500 font-bold shrink-0" />
+                        ) : (
+                          <span className="text-amber-500 font-bold mr-1">•</span>
+                        )}
+                        <span>Description Quality</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        {pForm.price > 0 ? (
+                          <Check className="h-3 w-3 text-emerald-500 font-bold shrink-0" />
+                        ) : (
+                          <span className="text-amber-500 font-bold mr-1">•</span>
+                        )}
+                        <span>Pricing Audited</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        {pForm.specifications.length > 0 ? (
+                          <Check className="h-3 w-3 text-emerald-500 font-bold shrink-0" />
+                        ) : (
+                          <span className="text-amber-500 font-bold mr-1">•</span>
+                        )}
+                        <span>Specs Populated</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        {pForm.imagesInput.trim() ? (
+                          <Check className="h-3 w-3 text-emerald-500 font-bold shrink-0" />
+                        ) : (
+                          <span className="text-amber-500 font-bold mr-1">•</span>
+                        )}
+                        <span>Media/Images Ready</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSaveProduct} className="space-y-6">
               {/* Core Specs */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -2019,7 +2406,7 @@ export default function AdminDashboard({
                 <h4 className="font-display font-bold text-xs text-slate-600 uppercase tracking-wider">
                   Multi-Retailer Pricing (Multiple Stores)
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   {/* Amazon */}
                   <div className="p-3 bg-white rounded-xl border border-slate-150 space-y-2">
                     <span className="text-xs font-bold text-orange-600">Amazon Storefront</span>
@@ -2094,7 +2481,82 @@ export default function AdminDashboard({
                       />
                     </div>
                   </div>
+
+                  {/* Custom Other Retailer (e.g. Nykaa, Ajio, Tata CLiQ, Croma) */}
+                  <div className="p-3 bg-indigo-50/40 rounded-xl border border-indigo-100 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-indigo-700">Custom Retailer</span>
+                      <input
+                        type="text"
+                        value={pForm.otherRetailerName}
+                        onChange={e => setPForm({ ...pForm, otherRetailerName: e.target.value })}
+                        className="rounded border border-indigo-200 bg-white px-1.5 py-0.5 text-[10.5px] outline-none font-bold text-indigo-600 w-28 text-right focus:border-indigo-500"
+                        placeholder="e.g. Nykaa"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-slate-400">Price ($ / ₹)</label>
+                      <input
+                        type="number"
+                        value={pForm.otherRetailerPrice || ''}
+                        onChange={e => setPForm({ ...pForm, otherRetailerPrice: Number(e.target.value) })}
+                        className="w-full rounded border border-slate-200 p-1 text-xs outline-none bg-white"
+                        placeholder="e.g. 59.99"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono uppercase text-slate-400">Affiliate / Product Link</label>
+                      <input
+                        type="text"
+                        value={pForm.otherRetailerUrl}
+                        onChange={e => setPForm({ ...pForm, otherRetailerUrl: e.target.value })}
+                        className="w-full rounded border border-slate-200 p-1 text-[10px] outline-none bg-white"
+                        placeholder="https://retailer.com/..."
+                      />
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Premium OpenAI Copywriter Integration */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <h4 className="font-display font-bold text-xs text-emerald-800 uppercase tracking-wider">
+                      Premium OpenAI Copywriter Integration
+                    </h4>
+                  </div>
+                  <p className="text-[11px] text-emerald-600/90 leading-relaxed max-w-xl">
+                    Utilize the secure server-side OpenAI model to instantly rewrite and optimize your product preview summary, long overview essay, buying verdict, pros, and cons into high-impact affiliate marketing copy.
+                  </p>
+                  {openaiOptimizeError && (
+                    <p className="text-[10px] text-red-500 font-semibold mt-1">
+                      ⚠️ {openaiOptimizeError}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  disabled={isOptimizingWithOpenAI}
+                  onClick={handleOpenAIOptimize}
+                  className={`shrink-0 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
+                    isOptimizingWithOpenAI 
+                      ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95'
+                  }`}
+                >
+                  {isOptimizingWithOpenAI ? (
+                    <>
+                      <span className="animate-spin mr-1 h-3.5 w-3.5 border-2 border-slate-400 border-t-transparent rounded-full" />
+                      <span>Optimizing copy...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✨ Optimize Editorial with OpenAI</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Descriptions */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Product, PriceHistoryItem, WatchlistItem } from '../types';
+import { trackWatchlistAdd } from '../utils/analytics';
 import { 
   getWatchlistFromFirestore, 
   saveWatchlistItemToFirestore, 
@@ -539,6 +540,7 @@ export default function PriceTrackerSection({
           smsPhone
         };
         await saveWatchlistItemToFirestore(item);
+        trackWatchlistAdd(selectedProduct.id, selectedProduct.title);
         setAlertEnabled(true);
         setCurrentWatchlistItem(item);
         showToast(`🔔 Golden Alert Activated! Alankapriya will track this product.`);
