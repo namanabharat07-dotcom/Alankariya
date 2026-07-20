@@ -19,6 +19,12 @@ service cloud.firestore {
       allow write: if isAdmin() || productId.matches('.*-test');
     }
 
+    // System metadata: public read, write restricted to admin
+    match /system/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Categories collection: public read, write restricted to admin
     match /categories/{categoryId} {
       allow read: if true;

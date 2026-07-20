@@ -107,7 +107,7 @@ export async function getProductsFromFirestore(): Promise<Product[]> {
     return products;
   } catch (error) {
     console.error('Error fetching products from Firestore:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -151,7 +151,7 @@ export async function getPostsFromFirestore(): Promise<Post[]> {
     return posts;
   } catch (error) {
     console.error('Error fetching posts from Firestore:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -195,7 +195,7 @@ export async function getFaqsFromFirestore(): Promise<FAQItem[]> {
     return faqs;
   } catch (error) {
     console.error('Error fetching FAQs from Firestore:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -266,144 +266,148 @@ export async function seedInitialDataIfEmpty(
   defaultFaqs: FAQItem[],
   defaultCategories: ProductCategory[]
 ): Promise<{ products: Product[]; posts: Post[]; faqs: FAQItem[]; categories: ProductCategory[] }> {
+  const systemMetaRef = doc(db, 'system', 'metadata');
+  let isAlreadySeeded = false;
+
   try {
-    // 1. Products
-    let products = await getProductsFromFirestore();
-    if (products.length === 0 && defaultProducts.length > 0) {
-      console.log('Seeding products collection in Firestore...');
-      try {
-        const batch = writeBatch(db);
-        defaultProducts.forEach((p) => {
-          const docRef = doc(db, PRODUCTS_COLLECTION, p.id);
-          batch.set(docRef, cleanData(p));
-        });
-        await batch.commit();
-      } catch (err) {
-        console.warn('Unable to write seed products to Firestore (visitor permissions), falling back to local defaults:', err);
-      }
-      products = [...defaultProducts];
+    const metaSnap = await getDoc(systemMetaRef);
+    if (metaSnap.exists() && metaSnap.data()?.seeded === true) {
+      isAlreadySeeded = true;
     }
+  } catch (err) {
+    console.warn('Unable to check system metadata:', err);
+  }
 
-    // 2. Posts
-    let posts = await getPostsFromFirestore();
-    if (posts.length === 0 && defaultPosts.length > 0) {
-      console.log('Seeding posts collection in Firestore...');
-      try {
-        const batch = writeBatch(db);
-        defaultPosts.forEach((p) => {
-          const docRef = doc(db, POSTS_COLLECTION, p.id);
-          batch.set(docRef, cleanData(p));
-        });
-        await batch.commit();
-      } catch (err) {
-        console.warn('Unable to write seed posts to Firestore (visitor permissions), falling back to local defaults:', err);
+  if (isAlreadySeeded) {
+    // Database has already been initialized. Fetch and return current Firestore data directly.
+    // If any fetch fails, it will correctly propagate the error to avoid corrupting client caches.
+    const products = await getProductsFromFirestore();
+    const posts = await getPostsFromFirestore();
+    const faqs = await getFaqsFromFirestore();
+    const categories = await getCategoriesFromFirestore();
+    return { products, posts, faqs, categories };
+  }
+
+  // Not seeded yet. Proceed with seeding.
+  let products = await getProductsFromFirestore();
+  if (products.length === 0 && defaultProducts.length > 0) {
+    console.log('Seeding products collection in Firestore...');
+    const batch = writeBatch(db);
+    defaultProducts.forEach((p) => {
+      const docRef = doc(db, PRODUCTS_COLLECTION, p.id);
+      batch.set(docRef, cleanData(p));
+    });
+    await batch.commit();
+    products = [...defaultProducts];
+  }
+
+  let posts = await getPostsFromFirestore();
+  if (posts.length === 0 && defaultPosts.length > 0) {
+    console.log('Seeding posts collection in Firestore...');
+    const batch = writeBatch(db);
+    defaultPosts.forEach((p) => {
+      const docRef = doc(db, POSTS_COLLECTION, p.id);
+      batch.set(docRef, cleanData(p));
+    });
+    await batch.commit();
+    posts = [...defaultPosts];
+  }
+
+  let faqs = await getFaqsFromFirestore();
+  if (faqs.length === 0 && defaultFaqs.length > 0) {
+    console.log('Seeding FAQs collection in Firestore...');
+    const batch = writeBatch(db);
+    defaultFaqs.forEach((f) => {
+      const docRef = doc(db, FAQS_COLLECTION, f.id);
+      batch.set(docRef, cleanData(f));
+    });
+    await batch.commit();
+    faqs = [...defaultFaqs];
+  }
+
+  // 4. Star Products
+  let starProducts = await getStarProductsFromFirestore();
+  if (starProducts.length === 0) {
+    console.log('Seeding star_products collection in Firestore...');
+    const defaultStarProducts: StarProduct[] = [
+      {
+        id: 'star-1',
+        title: 'Sony WH-1000XM5 Wireless Headphones',
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+        originalPrice: 449,
+        discountedPrice: 349,
+        discountPercentage: 22,
+        affiliateUrl: 'https://amazon.com/dp/B09XS7JLH3?tag=myaffiliate-20',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        order: 0,
+        enabled: true,
+        badgeType: 'biggest_deal',
+        badgeText: "🔥 Today's Biggest Deal",
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'star-2',
+        title: 'Apple iPad Air M1 (5th Gen, 64GB)',
+        image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80',
+        originalPrice: 599,
+        discountedPrice: 499,
+        discountPercentage: 17,
+        affiliateUrl: 'https://amazon.com/dp/B09V3K4CH4?tag=myaffiliate-20',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        order: 1,
+        enabled: true,
+        badgeType: 'limited_time',
+        badgeText: '⚡ Limited Time Offer',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'star-3',
+        title: 'Anker Magnetic Portable Charger 5K',
+        image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b17c?auto=format&fit=crop&w=800&q=80',
+        originalPrice: 45,
+        discountedPrice: 29,
+        discountPercentage: 35,
+        affiliateUrl: 'https://amazon.com/dp/B09923N1DS?tag=myaffiliate-20',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        order: 2,
+        enabled: true,
+        badgeType: 'best_discount',
+        badgeText: '💰 Best Discount Today',
+        createdAt: new Date().toISOString()
       }
-      posts = [...defaultPosts];
+    ];
+    try {
+      const batch = writeBatch(db);
+      defaultStarProducts.forEach((sp) => {
+        const docRef = doc(db, STAR_PRODUCTS_COLLECTION, sp.id);
+        batch.set(docRef, cleanData(sp));
+      });
+      await batch.commit();
+    } catch (err) {
+      console.warn('Unable to write seed star products to Firestore (visitor permissions), falling back to local defaults:', err);
     }
+  }
 
-    // 3. FAQs
-    let faqs = await getFaqsFromFirestore();
-    if (faqs.length === 0 && defaultFaqs.length > 0) {
-      console.log('Seeding FAQs collection in Firestore...');
-      try {
-        const batch = writeBatch(db);
-        defaultFaqs.forEach((f) => {
-          const docRef = doc(db, FAQS_COLLECTION, f.id);
-          batch.set(docRef, cleanData(f));
-        });
-        await batch.commit();
-      } catch (err) {
-        console.warn('Unable to write seed FAQs to Firestore (visitor permissions), falling back to local defaults:', err);
-      }
-      faqs = [...defaultFaqs];
-    }
+  // Categories
+  let categories = await getCategoriesFromFirestore();
+  if (categories.length === 0 && defaultCategories.length > 0) {
+    console.log('Seeding categories collection in Firestore...');
+    const batch = writeBatch(db);
+    defaultCategories.forEach((cat) => {
+      const docRef = doc(db, CATEGORIES_COLLECTION, cat.id);
+      batch.set(docRef, cleanData(cat));
+    });
+    await batch.commit();
+    categories = [...defaultCategories];
+  }
 
-    // 4. Star Products
-    let starProducts = await getStarProductsFromFirestore();
-    if (starProducts.length === 0) {
-      console.log('Seeding star_products collection in Firestore...');
-      const defaultStarProducts: StarProduct[] = [
-        {
-          id: 'star-1',
-          title: 'Sony WH-1000XM5 Wireless Headphones',
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-          originalPrice: 449,
-          discountedPrice: 349,
-          discountPercentage: 22,
-          affiliateUrl: 'https://amazon.com/dp/B09XS7JLH3?tag=myaffiliate-20',
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          order: 0,
-          enabled: true,
-          badgeType: 'biggest_deal',
-          badgeText: "🔥 Today's Biggest Deal",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'star-2',
-          title: 'Apple iPad Air M1 (5th Gen, 64GB)',
-          image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80',
-          originalPrice: 599,
-          discountedPrice: 499,
-          discountPercentage: 17,
-          affiliateUrl: 'https://amazon.com/dp/B09V3K4CH4?tag=myaffiliate-20',
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          order: 1,
-          enabled: true,
-          badgeType: 'limited_time',
-          badgeText: '⚡ Limited Time Offer',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'star-3',
-          title: 'Anker Magnetic Portable Charger 5K',
-          image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b17c?auto=format&fit=crop&w=800&q=80',
-          originalPrice: 45,
-          discountedPrice: 29,
-          discountPercentage: 35,
-          affiliateUrl: 'https://amazon.com/dp/B09923N1DS?tag=myaffiliate-20',
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          order: 2,
-          enabled: true,
-          badgeType: 'best_discount',
-          badgeText: '💰 Best Discount Today',
-          createdAt: new Date().toISOString()
-        }
-      ];
-      try {
-        const batch = writeBatch(db);
-        defaultStarProducts.forEach((sp) => {
-          const docRef = doc(db, STAR_PRODUCTS_COLLECTION, sp.id);
-          batch.set(docRef, cleanData(sp));
-        });
-        await batch.commit();
-      } catch (err) {
-        console.warn('Unable to write seed star products to Firestore (visitor permissions), falling back to local defaults:', err);
-      }
-      starProducts = [...defaultStarProducts];
-    }
-
-    // 5. Categories
-    let categories = await getCategoriesFromFirestore();
-    if (categories.length === 0 && defaultCategories.length > 0) {
-      console.log('Seeding categories collection in Firestore...');
-      try {
-        const batch = writeBatch(db);
-        defaultCategories.forEach((cat) => {
-          const docRef = doc(db, CATEGORIES_COLLECTION, cat.id);
-          batch.set(docRef, cleanData(cat));
-        });
-        await batch.commit();
-      } catch (err) {
-        console.warn('Unable to write seed categories to Firestore (visitor permissions), falling back to local defaults:', err);
-      }
-      categories = [...defaultCategories];
-    }
-
-    // 6. Price History
-    let priceHistorySnapshot = await getDocs(collection(db, 'price_history'));
+  // Price History Seeding
+  try {
+    const priceHistoryRef = collection(db, 'price_history');
+    const priceHistorySnapshot = await getDocs(priceHistoryRef);
     if (priceHistorySnapshot.empty) {
       console.log('Seeding price_history collection in Firestore...');
       const defaultHistory: PriceHistoryItem[] = [];
@@ -436,28 +440,25 @@ export async function seedInitialDataIfEmpty(
       seedHistoryForProduct('prod-2', 799);
       seedHistoryForProduct('prod-3', 1299);
       
-      try {
-        const batch = writeBatch(db);
-        defaultHistory.forEach((hist) => {
-          const docRef = doc(db, 'price_history', hist.id);
-          batch.set(docRef, cleanData(hist));
-        });
-        await batch.commit();
-      } catch (err) {
-        console.warn('Unable to write seed price history to Firestore (visitor permissions), falling back:', err);
-      }
+      const batch = writeBatch(db);
+      defaultHistory.forEach((hist) => {
+        const docRef = doc(db, 'price_history', hist.id);
+        batch.set(docRef, cleanData(hist));
+      });
+      await batch.commit();
     }
-
-    return { products, posts, faqs, categories };
-  } catch (error) {
-    console.warn('Soft-handled warning during Firestore database seeding check:', error);
-    return {
-      products: defaultProducts,
-      posts: defaultPosts,
-      faqs: defaultFaqs,
-      categories: defaultCategories
-    };
+  } catch (err) {
+    console.warn('Unable to read or write seed price history to Firestore (visitor permissions):', err);
   }
+
+  // Write system metadata to mark database as seeded!
+  try {
+    await setDoc(systemMetaRef, { seeded: true, seededAt: new Date().toISOString() });
+  } catch (err) {
+    console.warn('Unable to write system metadata (visitor permissions):', err);
+  }
+
+  return { products, posts, faqs, categories };
 }
 
 /**
@@ -476,7 +477,7 @@ export async function getStarProductsFromFirestore(): Promise<StarProduct[]> {
     return stars;
   } catch (error) {
     console.error('Error fetching star products from Firestore:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -521,7 +522,7 @@ export async function getCategoriesFromFirestore(): Promise<ProductCategory[]> {
     return list;
   } catch (error) {
     console.error('Error fetching categories from Firestore:', error);
-    return [];
+    throw error;
   }
 }
 

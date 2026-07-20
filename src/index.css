@@ -6,32 +6,320 @@
   --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cinzel", serif;
   --font-mono: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Force background colors (50, 100, 200, 300) to modern dark theme values */
+  --color-stone-50: #121212;
+  --color-stone-100: #1a1a1a;
+  --color-stone-200: #262626;
+  --color-stone-300: #3a3a3a;
+
+  --color-slate-50: #121212;
+  --color-slate-100: #1a1a1a;
+  --color-slate-200: #262626;
+  --color-slate-300: #3a3a3a;
+
+  --color-zinc-50: #121212;
+  --color-zinc-100: #1a1a1a;
+  --color-zinc-200: #262626;
+  --color-zinc-300: #3a3a3a;
+
+  --color-gray-50: #121212;
+  --color-gray-100: #1a1a1a;
+  --color-gray-200: #262626;
+  --color-gray-300: #3a3a3a;
+
+  --color-neutral-50: #121212;
+  --color-neutral-100: #1a1a1a;
+  --color-neutral-200: #262626;
+  --color-neutral-300: #3a3a3a;
+
+  /* Force secondary & body text colors (400, 500, 600) to highly readable light colors */
+  --color-stone-400: #A3A3A3;
+  --color-stone-500: #E5E7EB;
+  --color-stone-600: #F3F4F6;
+
+  --color-slate-400: #A3A3A3;
+  --color-slate-500: #E5E7EB;
+  --color-slate-600: #F3F4F6;
+
+  --color-zinc-400: #A3A3A3;
+  --color-zinc-500: #E5E7EB;
+  --color-zinc-600: #F3F4F6;
+
+  --color-gray-400: #A3A3A3;
+  --color-gray-500: #E5E7EB;
+  --color-gray-600: #F3F4F6;
+
+  --color-neutral-400: #A3A3A3;
+  --color-neutral-500: #E5E7EB;
+  --color-neutral-600: #F3F4F6;
+
+  /* Force heading and high contrast text (700, 800, 900, 950) to off-white & pure white */
+  --color-stone-700: #F9FAFB;
+  --color-stone-800: #FFFFFF;
+  --color-stone-900: #FFFFFF;
+  --color-stone-950: #FFFFFF;
+
+  --color-slate-700: #F9FAFB;
+  --color-slate-800: #FFFFFF;
+  --color-slate-900: #FFFFFF;
+  --color-slate-950: #FFFFFF;
+
+  --color-zinc-700: #F9FAFB;
+  --color-zinc-800: #FFFFFF;
+  --color-zinc-900: #FFFFFF;
+  --color-zinc-950: #FFFFFF;
+
+  --color-gray-700: #F9FAFB;
+  --color-gray-800: #FFFFFF;
+  --color-gray-900: #FFFFFF;
+  --color-gray-950: #FFFFFF;
+
+  --color-neutral-700: #F9FAFB;
+  --color-neutral-800: #FFFFFF;
+  --color-neutral-900: #FFFFFF;
+  --color-neutral-950: #FFFFFF;
+
+  /* Semantic Highlight overrides */
+  --color-amber-50: #1C1917;
+  --color-amber-100: #292524;
+  --color-amber-250: #44403C;
+  --color-amber-800: #F59E0B;
+  --color-amber-900: #FBBF24;
+  --color-amber-950: #FFFFFF;
+
+  --color-emerald-50: #0D1E1A;
+  --color-emerald-100: #11382F;
+  --color-emerald-800: #34D399;
+  --color-emerald-900: #6EE7B7;
+
+  --color-rose-50: #211113;
+  --color-rose-100: #3B1B1F;
+  --color-rose-800: #FB7185;
+  --color-rose-900: #FDA4AF;
 }
 
-/* Premium smooth layout custom scrollbar */
+/* Premium global dark theme overrides and styles */
+:root {
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #121212;
+  --bg-tertiary: #181818;
+  --text-primary: #F5F5F0;
+  --text-secondary: #A3A3A3;
+  --accent-gold: #D97706;
+  --accent-gold-hover: #F59E0B;
+}
+
+body {
+  background-color: #0A0A0A !important;
+  color: #F5F5F0 !important;
+  cursor: default;
+}
+
+/* Hide native scrollbars beautifully */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #faf9f6;
+  background: #0A0A0A;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e2e0d8;
+  background: #2A2A2A;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #cbc9c0;
+  background: #3E3E3E;
 }
 
-/* Elegant fade-in up soft animation */
+/* Force elements into modern cinematic dark style seamlessly without breaking UI logic */
+.bg-\[\#faf9f6\], .bg-\[\#fbfaf7\], .bg-\[\#fbfaf7\]\/60 {
+  background-color: #0A0A0A !important;
+}
+
+.bg-white, .bg-slate-50, .bg-stone-50, .bg-\[\#fafaf6\] {
+  background-color: #121212 !important;
+}
+
+.bg-stone-100, .bg-slate-100 {
+  background-color: #1A1A1A !important;
+}
+
+.bg-stone-200, .bg-slate-200 {
+  background-color: #262626 !important;
+}
+
+.bg-amber-50 {
+  background-color: #161514 !important;
+}
+
+.bg-amber-50\/40 {
+  background-color: rgba(24, 23, 21, 0.4) !important;
+}
+
+.bg-amber-100, .bg-amber-100\/60 {
+  background-color: #241a0c !important;
+}
+
+.bg-orange-50 {
+  background-color: #161514 !important;
+}
+
+.bg-emerald-50, .bg-emerald-50\/50 {
+  background-color: #0d1a15 !important;
+}
+
+.bg-rose-50, .bg-rose-50\/40 {
+  background-color: #1a0f10 !important;
+}
+
+.border-stone-100, .border-stone-200, .border-slate-100, .border-slate-200, .border-amber-100\/30, .border-amber-100\/35, .border-amber-100\/40, .border-amber-100\/60, .border-amber-200\/20 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.border-emerald-100 {
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.border-rose-100 {
+  border-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+/* Primary legibility overrides for headings and titles */
+.text-stone-800, .text-stone-850, .text-stone-900, .text-stone-950,
+.text-slate-800, .text-slate-850, .text-slate-900, .text-slate-950 {
+  color: #FFFFFF !important;
+}
+
+/* Secondary/medium-high focus text colors */
+.text-stone-700, .text-slate-700, .text-stone-750, .text-slate-750 {
+  color: #F9FAFB !important;
+}
+
+/* Regular body copy, card description, and list content */
+.text-stone-500, .text-slate-500, .text-stone-600, .text-slate-600 {
+  color: #E5E7EB !important;
+}
+
+/* Subtext, small details, and helper labels */
+.text-slate-400, .text-stone-400 {
+  color: #CCCCCC !important;
+}
+
+/* Highlighted semantic statuses */
+.text-amber-800, .text-amber-900, .text-amber-950 {
+  color: #FBBF24 !important;
+}
+
+.text-emerald-800, .text-emerald-700 {
+  color: #34D399 !important;
+}
+
+.text-rose-800, .text-rose-700 {
+  color: #FB7185 !important;
+}
+
+/* Underline Wipe hover effect for nav-links */
+.nav-link-wipe {
+  position: relative;
+}
+
+.nav-link-wipe::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background-color: #D97706; /* amber gold */
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link-wipe:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Continuous slow Ken Burns zoom */
+@keyframes kenBurns {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.ken-burns-bg {
+  animation: kenBurns 24s ease-in-out infinite;
+}
+
+/* Premium micro-interactions and transitions */
+.btn-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-sweep:hover::after {
+  left: 125%;
+}
+
+/* Smooth custom cursor/magnetic animations */
+.magnetic {
+  transition: transform 0.12s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+/* Infinite sliding marquee strip */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Simple fade-in up soft animation */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -40,16 +328,16 @@
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Soft gold glowing animation */
 @keyframes soft-pulse-gold {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.2);
+    box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.2);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(197, 160, 89, 0);
+    box-shadow: 0 0 0 10px rgba(217, 119, 6, 0);
   }
 }
 
@@ -57,4 +345,7 @@
   animation: soft-pulse-gold 2.5s infinite ease-in-out;
 }
 
-
+/* Pinned sticky scroll animation triggers */
+.sticky-pinned-col {
+  will-change: transform;
+}

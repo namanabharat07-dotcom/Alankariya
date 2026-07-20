@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, ArrowRight, Github, ExternalLink, Heart } from 'lucide-react';
+import { motion } from 'motion/react';
 
 import { subscribeUser, requestBrowserNotification } from '../lib/marketing';
 import { subscribeToNewsletterInFirestore, checkNewsletterSubscriptionStatus } from '../lib/firebase';
@@ -110,23 +111,24 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
       { name: 'Affiliate Disclosure', page: 'disclosure' },
       { name: 'Legal Disclaimer', page: 'disclaimer' },
       { name: 'Privacy Policy', page: 'privacy' },
-      { name: 'Terms of Service', page: 'terms' }
+      { name: 'Terms & Conditions', page: 'terms' },
+      { name: 'Cookie Policy', page: 'cookies' }
     ]
   };
 
   return (
-    <footer className="border-t border-amber-100 bg-[#fbfaf7] pt-16 pb-8" id="app-footer">
+    <footer className="border-t border-white/5 bg-[#050505] pt-24 pb-8" id="app-footer">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
         {/* Top Segment: Newsletter and Intro */}
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 pb-12 border-b border-amber-100/60">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 pb-12 border-b border-white/10">
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-700 text-white font-display font-medium text-lg tracking-wide">
                 A
               </div>
-              <span className="font-display font-bold text-2xl tracking-wide text-slate-900">
-                Alanka<span className="text-amber-700 font-light italic">riya</span>
+              <span className="font-display font-bold text-2xl tracking-wide text-[#F5F5F0]">
+                Alanka<span className="text-amber-500 font-medium italic">priya</span>
               </span>
             </div>
             <p className="max-w-md text-sm text-slate-500 leading-relaxed font-light">
@@ -136,7 +138,7 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
  
           {/* Newsletter Box */}
           <div className="lg:col-span-2 space-y-4">
-            <h4 className="font-display text-lg font-medium text-slate-800 tracking-wide">
+            <h4 className="font-display text-lg font-bold text-amber-400 tracking-wide">
               Stay in the loop
             </h4>
             <p className="text-sm text-slate-500 font-light">
@@ -184,8 +186,26 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
         </div>
  
         {/* Middle Segment: Nav Columns */}
-        <div className="grid grid-cols-2 gap-8 py-12 md:grid-cols-3 lg:grid-cols-4">
-          <div>
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={{
+            hidden: {},
+            visible: {
+              transition: {
+                staggerChildren: 0.1
+              }
+            }
+          }}
+          className="grid grid-cols-2 gap-8 py-12 md:grid-cols-3 lg:grid-cols-4"
+        >
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+            }}
+          >
             <h5 className="font-sans font-bold text-[11px] uppercase tracking-wider text-amber-800/80 mb-4">
               Platform
             </h5>
@@ -194,16 +214,21 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
                 <li key={link.name}>
                   <button
                     onClick={() => onNavigate(link.page)}
-                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light"
+                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light hover:translate-x-1 duration-200 transform"
                   >
                     {link.name}
                   </button>
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
  
-          <div>
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+            }}
+          >
             <h5 className="font-sans font-bold text-[11px] uppercase tracking-wider text-amber-800/80 mb-4">
               Resources
             </h5>
@@ -212,7 +237,7 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
                 <li key={link.name}>
                   <button
                     onClick={() => onNavigate(link.page)}
-                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light"
+                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light hover:translate-x-1 duration-200 transform"
                   >
                     {link.name}
                   </button>
@@ -223,7 +248,7 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
                   <button
                     onClick={onReplayWelcome}
                     id="footer-btn-replay-welcome"
-                    className="text-sm text-amber-700 hover:text-amber-800 hover:underline transition-colors text-left font-medium flex items-center space-x-1"
+                    className="text-sm text-amber-700 hover:text-amber-800 hover:underline transition-all text-left font-medium flex items-center space-x-1"
                   >
                     <span className="animate-pulse">✨</span>
                     <span>Replay Welcome Experience</span>
@@ -231,9 +256,15 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
                 </li>
               )}
             </ul>
-          </div>
+          </motion.div>
  
-          <div className="col-span-2 md:col-span-1 lg:col-span-2">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+            }}
+            className="col-span-2 md:col-span-1 lg:col-span-2"
+          >
             <h5 className="font-sans font-bold text-[11px] uppercase tracking-wider text-amber-800/80 mb-4">
               Trust & Legal
             </h5>
@@ -242,21 +273,43 @@ export default function Footer({ onNavigate, onReplayWelcome }: FooterProps) {
                 <div key={link.name}>
                   <button
                     onClick={() => onNavigate(link.page)}
-                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light"
+                    className="text-sm text-slate-500 hover:text-amber-800 transition-colors text-left font-light hover:translate-x-1 duration-200 transform"
                   >
                     {link.name}
                   </button>
                 </div>
               ))}
             </div>
+          </motion.div>
+        </motion.div>
+
+        {/* LARGE CLOSING HEADLINE */}
+        <div className="py-14 border-t border-b border-white/5 my-12 text-center overflow-hidden">
+          <h2 className="font-display text-4xl sm:text-6xl md:text-8xl lg:text-9rem font-black tracking-tighter text-white/90 line-reveal leading-none uppercase">
+            Alankapriya Collective
+          </h2>
+        </div>
+
+        {/* CONTINUOUS MARQUEE RIBBON */}
+        <div className="w-full overflow-hidden py-6 border-b border-white/5 relative z-10 select-none bg-stone-950/20 my-8" id="footer-marquee">
+          <div className="animate-marquee flex whitespace-nowrap gap-12 text-[10px] font-mono uppercase tracking-[0.2em] text-amber-500/80">
+            {Array(5).fill([
+              "• 100% EVIDENCE-BASED AUDITS",
+              "• ZERO COMMERCIAL BRAND PLACEMENTS",
+              "• SECURE PRICE TRACKING ENGINE",
+              "• INDEPENDENT TESTING LABS",
+              "• CURATED LUXURY HARDWARE MATRICES"
+            ]).flat().map((text, idx) => (
+              <span key={idx} className="shrink-0 font-semibold">{text}</span>
+            ))}
           </div>
         </div>
  
         {/* Bottom Segment: Affiliate disclaimer note & Copyright */}
-        <div className="border-t border-amber-100/40 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4" id="footer-copyright-container">
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4" id="footer-copyright-container">
           <div className="text-center md:text-left space-y-2 max-w-2xl">
             <p className="font-light">
-              © {new Date().getFullYear()} Alankapriya. All rights reserved.
+              Copyright © 2026 Alankapriya. All Rights Reserved.
             </p>
             <p className="leading-relaxed text-[11px] text-slate-400 font-light">
               <strong className="text-slate-500 font-medium">Affiliate Disclosure:</strong> We may earn a small commission when you buy through our links, at no extra cost to you. This helps us continue reviewing products independently.

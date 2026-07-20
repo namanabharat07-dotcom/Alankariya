@@ -27,22 +27,22 @@ export function updateSEOMetadata(options: {
   } = options;
 
   // 1. Core Meta Tags
-  document.title = `${title} | TechAffiliate Premium`;
+  document.title = `${title} | Alankapriya`;
 
   updateOrCreateMetaTag('description', description);
   updateOrCreateMetaTag('robots', 'index, follow');
 
   // 2. Open Graph (OG) Tags
-  updateOrCreateMetaTag('og:title', `${title} | TechAffiliate Premium`, 'property');
+  updateOrCreateMetaTag('og:title', `${title} | Alankapriya`, 'property');
   updateOrCreateMetaTag('og:description', description, 'property');
   updateOrCreateMetaTag('og:type', type, 'property');
   updateOrCreateMetaTag('og:url', canonicalUrl, 'property');
   updateOrCreateMetaTag('og:image', imageUrl, 'property');
-  updateOrCreateMetaTag('og:site_name', 'TechAffiliate Premium', 'property');
+  updateOrCreateMetaTag('og:site_name', 'Alankapriya', 'property');
 
   // 3. Twitter Card Tags
   updateOrCreateMetaTag('twitter:card', 'summary_large_image');
-  updateOrCreateMetaTag('twitter:title', `${title} | TechAffiliate Premium`);
+  updateOrCreateMetaTag('twitter:title', `${title} | Alankapriya`);
   updateOrCreateMetaTag('twitter:description', description);
   updateOrCreateMetaTag('twitter:image', imageUrl);
 

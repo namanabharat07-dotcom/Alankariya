@@ -40,6 +40,15 @@ export default function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isAdmin = currentUser?.email?.toLowerCase() === 'namanabharat07@gmail.com';
 
@@ -65,7 +74,11 @@ export default function Navbar({
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-amber-100/50 bg-[#faf9f6]/90 backdrop-blur-md">
+    <header className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
+      scrolled 
+        ? 'border-white/10 bg-[#0A0A0A]/85 backdrop-blur-xl shadow-lg shadow-black/30 py-1' 
+        : 'border-transparent bg-transparent py-3'
+    }`}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8" id="nav-container">
         
         {/* Brand Logo */}
@@ -74,15 +87,15 @@ export default function Navbar({
           onClick={() => { onNavigate('home'); setMobileMenuOpen(false); }}
           id="nav-logo"
         >
-          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-800 text-[#faf9f6] font-display font-medium text-lg sm:text-xl shadow-sm transition-transform hover:scale-105">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-amber-700 text-[#F5F5F0] font-display font-medium text-lg sm:text-xl shadow-sm transition-all duration-300 hover:scale-105 hover:bg-amber-650">
             A
           </div>
-          <span className="font-display font-bold text-lg sm:text-2xl tracking-wide text-slate-900 flex items-center">
-            Alanka<span className="text-amber-700 font-light italic">riya</span>
-            <span className="hidden sm:inline-flex ml-1.5 text-[9px] font-sans font-semibold uppercase text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200/40">STORE</span>
+          <span className="font-display font-bold text-lg sm:text-2xl tracking-wide text-[#F5F5F0] flex items-center">
+            Alanka<span className="text-amber-600 font-light italic">priya</span>
+            <span className="hidden sm:inline-flex ml-1.5 text-[9px] font-sans font-semibold uppercase text-amber-600 bg-amber-950/40 px-1.5 py-0.5 rounded-full border border-amber-800/30">STORE</span>
           </span>
         </div>
-
+ 
         {/* Desktop Navigation Links */}
         <nav className="hidden xl:flex items-center space-x-1" id="desktop-nav">
           {navItems.map((item) => {
@@ -93,13 +106,13 @@ export default function Navbar({
                 key={item.name}
                 id={`nav-item-${item.page}`}
                 onClick={() => onNavigate(item.page)}
-                className={`group relative flex items-center space-x-1.5 px-3 py-2 rounded-lg font-sans text-xs uppercase tracking-wider font-medium transition-colors duration-200 ${
+                className={`group relative flex items-center space-x-1.5 px-3 py-2 rounded-lg font-sans text-xs uppercase tracking-wider font-medium transition-colors duration-200 nav-link-wipe ${
                   isActive 
-                    ? 'text-[#1c1917] bg-amber-50/60' 
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'text-amber-500 font-bold bg-amber-950/20' 
+                    : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/40'
                 }`}
               >
-                <Icon className={`h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-105 ${isActive ? 'text-amber-700' : 'text-slate-400 group-hover:text-slate-500'}`} />
+                <Icon className={`h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-105 ${isActive ? 'text-amber-500' : 'text-stone-400 group-hover:text-stone-200'}`} />
                 <span>{item.name}</span>
                 {item.badge !== undefined && (
                   <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white animate-pulse">
@@ -109,7 +122,7 @@ export default function Navbar({
                 {isActive && (
                   <motion.div 
                     layoutId="activeNavIndicator" 
-                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-700 rounded-full" 
+                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-650 rounded-full" 
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}

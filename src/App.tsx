@@ -8,10 +8,13 @@ import {
   seedInitialDataIfEmpty,
   saveProductToFirestore,
   deleteProductFromFirestore,
+  getProductsFromFirestore,
   savePostToFirestore,
   deletePostFromFirestore,
+  getPostsFromFirestore,
   saveFaqToFirestore,
   deleteFaqFromFirestore,
+  getFaqsFromFirestore,
   saveAnalyticsEventToFirestore,
   getAnalyticsEventsFromFirestore,
   auth,
@@ -50,7 +53,16 @@ import AdminDashboard from './components/AdminDashboard';
 import CartDrawer from './components/CartDrawer';
 import StarProductsCarousel from './components/StarProductsCarousel';
 import AIFinder from './components/AIFinder';
-import PremiumWelcome from './components/PremiumWelcome';
+import { 
+  AboutPage, 
+  ContactPage, 
+  PrivacyPolicyPage, 
+  TermsPage, 
+  DisclaimerPage, 
+  CookiePolicyPage, 
+  AffiliateDisclosurePage 
+} from './components/TrustPages';
+import SmoothScroll from './components/SmoothScroll';
 import { LargeNewsletterSection, CompactScrollBanner, ExitIntentPopup } from './components/NewsletterSection';
 import { 
   Sparkles, Award, ShieldCheck, ShoppingBag, ArrowRight, Star, 
@@ -68,9 +80,6 @@ export default function App() {
   const [isDbSyncing, setIsDbSyncing] = useState(false);
   const [starProducts, setStarProducts] = useState<StarProduct[]>([]);
 
-  // --- Premium Welcome Experience State ---
-  const [showWelcome, setShowWelcome] = useState(false);
-
   const placeholders = [
     "What are you looking to buy today?",
     "Gaming phone under ₹25,000",
@@ -82,6 +91,11 @@ export default function App() {
     "Air fryer"
   ];
   const [currentPlaceholderIdx, setCurrentPlaceholderIdx] = useState(0);
+  const hasAnimatedRef = useRef(false);
+
+  useEffect(() => {
+    hasAnimatedRef.current = true;
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -89,30 +103,6 @@ export default function App() {
     }, 3500);
     return () => clearInterval(timer);
   }, []);
-
-  const handleWelcomeComplete = () => {
-    try {
-      localStorage.setItem('alankapriya_intro_seen', 'true');
-    } catch (e) {
-      console.error(e);
-    }
-    setShowWelcome(false);
-    setTimeout(() => {
-      const searchInput = document.getElementById('home-hero-search-input');
-      if (searchInput) {
-        searchInput.focus();
-      }
-    }, 150);
-  };
-
-  const handleReplayWelcome = () => {
-    try {
-      localStorage.removeItem('alankapriya_intro_seen');
-    } catch (e) {
-      console.error(e);
-    }
-    setShowWelcome(true);
-  };
 
   // --- Firebase Authentication state & listeners ---
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -476,8 +466,21 @@ export default function App() {
           });
         }
       }
+
+      // Re-fetch latest from Firestore to guarantee UI is perfectly in sync
+      const latest = await getProductsFromFirestore();
+      setData(prev => ({ ...prev, products: latest }));
+      saveProducts(latest);
     } catch (err) {
       console.error('Error syncing products with Firestore:', err);
+      // Revert local state to match Firestore database reality
+      try {
+        const reverted = await getProductsFromFirestore();
+        setData(prev => ({ ...prev, products: reverted }));
+        saveProducts(reverted);
+      } catch (fallbackErr) {
+        console.error('Failed to revert products from Firestore:', fallbackErr);
+      }
     } finally {
       setIsDbSyncing(false);
     }
@@ -516,8 +519,21 @@ export default function App() {
           });
         }
       }
+
+      // Re-fetch latest from Firestore to guarantee UI is perfectly in sync
+      const latest = await getPostsFromFirestore();
+      setData(prev => ({ ...prev, posts: latest }));
+      savePosts(latest);
     } catch (err) {
       console.error('Error syncing posts with Firestore:', err);
+      // Revert local state to match Firestore database reality
+      try {
+        const reverted = await getPostsFromFirestore();
+        setData(prev => ({ ...prev, posts: reverted }));
+        savePosts(reverted);
+      } catch (fallbackErr) {
+        console.error('Failed to revert posts from Firestore:', fallbackErr);
+      }
     } finally {
       setIsDbSyncing(false);
     }
@@ -547,8 +563,21 @@ export default function App() {
       for (const p of changed) {
         await saveFaqToFirestore(p);
       }
+
+      // Re-fetch latest from Firestore to guarantee UI is perfectly in sync
+      const latest = await getFaqsFromFirestore();
+      setData(prev => ({ ...prev, faqs: latest }));
+      saveFaqs(latest);
     } catch (err) {
       console.error('Error syncing FAQs with Firestore:', err);
+      // Revert local state to match Firestore database reality
+      try {
+        const reverted = await getFaqsFromFirestore();
+        setData(prev => ({ ...prev, faqs: reverted }));
+        saveFaqs(reverted);
+      } catch (fallbackErr) {
+        console.error('Failed to revert FAQs from Firestore:', fallbackErr);
+      }
     } finally {
       setIsDbSyncing(false);
     }
@@ -577,8 +606,19 @@ export default function App() {
       for (const p of changed) {
         await saveStarProductToFirestore(p);
       }
+
+      // Re-fetch latest from Firestore to guarantee UI is perfectly in sync
+      const latest = await getStarProductsFromFirestore();
+      setStarProducts(latest);
     } catch (err) {
       console.error('Error syncing star products with Firestore:', err);
+      // Revert local state to match Firestore database reality
+      try {
+        const reverted = await getStarProductsFromFirestore();
+        setStarProducts(reverted);
+      } catch (fallbackErr) {
+        console.error('Failed to revert star products from Firestore:', fallbackErr);
+      }
     } finally {
       setIsDbSyncing(false);
     }
@@ -608,8 +648,21 @@ export default function App() {
       for (const p of changed) {
         await saveCategoryToFirestore(p);
       }
+
+      // Re-fetch latest from Firestore to guarantee UI is perfectly in sync
+      const latest = await getCategoriesFromFirestore();
+      setProductCategories(latest);
+      saveCategories(latest);
     } catch (err) {
       console.error('Error syncing categories with Firestore:', err);
+      // Revert local state to match Firestore database reality
+      try {
+        const reverted = await getCategoriesFromFirestore();
+        setProductCategories(reverted);
+        saveCategories(reverted);
+      } catch (fallbackErr) {
+        console.error('Failed to revert categories from Firestore:', fallbackErr);
+      }
     } finally {
       setIsDbSyncing(false);
     }
@@ -681,6 +734,34 @@ export default function App() {
     } else if (currentPage === 'admin') {
       title = 'Admin Command Center';
       desc = 'Manage affiliate products, sitemaps, and real-time tracking dashboard.';
+    } else if (currentPage === 'about') {
+      title = 'About Us | Alankapriya';
+      desc = 'Learn about Alankapriya, our mission to provide unbiased product comparisons, and how our AI-assisted audits empower smart purchasing decisions.';
+      logEvent('page_view', undefined, currentPage);
+    } else if (currentPage === 'contact') {
+      title = 'Contact Our Editorial Desk | Alankapriya';
+      desc = 'Get in touch with Alankapriya. Submit feedback, editorial corrections, or product suggestions to our team.';
+      logEvent('page_view', undefined, currentPage);
+    } else if (currentPage === 'privacy') {
+      title = 'Privacy Policy | Alankapriya';
+      desc = 'Read the Privacy Policy for Alankapriya. Learn how we secure user data, cookies, and comply with GDPR, CCPA, Google AdSense, and Google Analytics.';
+      logEvent('page_view', undefined, currentPage);
+    } else if (currentPage === 'terms') {
+      title = 'Terms & Conditions | Alankapriya';
+      desc = 'Review the Terms and Conditions for utilizing the Alankapriya platform, independent curation tools, and product metrics.';
+      logEvent('page_view', undefined, currentPage);
+    } else if (currentPage === 'disclaimer') {
+      title = 'Legal & Technical Disclaimer | Alankapriya';
+      desc = 'Important disclosures about dynamic price changes, product specifications, affiliate links, and safety recommendations.';
+      logEvent('page_view', undefined, currentPage);
+    } else if (currentPage === 'cookies') {
+      title = 'Cookie Policy | Alankapriya';
+      desc = 'Understand how Alankapriya uses cookies, Google AdSense ad cookies, and affiliate tracking tokens to improve your user experience.';
+      logEvent('page_view', undefined, currentPage);
+    } else if (currentPage === 'disclosure') {
+      title = 'Affiliate Advertising Disclosure | Alankapriya';
+      desc = 'Transparent disclosure of our affiliate relationships with merchant portals like Amazon and Flipkart, in compliance with FTC guidelines.';
+      logEvent('page_view', undefined, currentPage);
     } else {
       logEvent('page_view', undefined, currentPage);
     }
@@ -957,6 +1038,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f6] text-stone-800 antialiased font-sans">
+      <SmoothScroll route={`${currentPage}-${activeProductId || ''}-${activePostId || ''}`}>
       
       {/* Sticky Top Header Navigation */}
       <Navbar 
@@ -974,7 +1056,6 @@ export default function App() {
           setIsAuthModalOpen(true);
         }}
         onSignOut={handleSignOut}
-        onReplayWelcome={handleReplayWelcome}
         products={data.products}
       />
 
@@ -1014,27 +1095,64 @@ export default function App() {
               id="home-page-view"
             >
               {/* 1. Premium Hero Section at the absolute top */}
-              <section className="relative overflow-hidden bg-[#1c1917] py-20 text-white" id="home-hero">
+              <section className="relative overflow-hidden bg-[#0A0A0A] py-28 text-white flex flex-col justify-center items-center" id="home-hero">
+                {/* Muted background with slow Ken Burns zoom */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+                  <div 
+                    className="w-full h-full bg-cover bg-center scale-100 ken-burns-bg"
+                    style={{
+                      backgroundImage: `radial-gradient(circle at center, rgba(217, 119, 6, 0.1) 0%, rgba(10, 10, 10, 0.7) 100%), url("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1964&auto=format&fit=crop")`
+                    }}
+                  />
+                </div>
+
                 {/* Decorative glowing back-blobs with elegant amber tones */}
                 <div className="absolute top-0 left-1/4 h-80 w-80 rounded-full bg-amber-500/5 blur-3xl animate-pulse" />
                 <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-stone-500/10 blur-3xl animate-pulse" />
 
-                <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 relative text-center space-y-8">
-                  <span className="inline-flex items-center space-x-1.5 rounded-full bg-amber-900/40 border border-amber-500/20 px-3.5 py-1 text-xs font-bold text-amber-300 uppercase tracking-widest">
-                    <Sparkles className="h-3 w-3 fill-amber-300" />
-                    <span>Next-Gen Shopping</span>
-                  </span>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 relative text-center space-y-8"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: 0.05 }}
+                  >
+                    <span className="inline-flex items-center space-x-1.5 rounded-full bg-amber-900/40 border border-amber-500/20 px-3.5 py-1 text-xs font-bold text-amber-300 uppercase tracking-widest">
+                      <Sparkles className="h-3 w-3 fill-amber-300 animate-pulse" />
+                      <span>Next-Gen Shopping</span>
+                    </span>
+                  </motion.div>
                   
-                  <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-[#faf9f6] leading-tight max-w-3xl mx-auto">
+                  <motion.h1 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: 0.1 }}
+                    className="font-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-[#faf9f6] leading-tight max-w-3xl mx-auto"
+                  >
                     Buy Smarter with <span className="bg-gradient-to-r from-amber-200 via-amber-350 to-amber-100 bg-clip-text text-transparent">AI</span>
-                  </h1>
+                  </motion.h1>
                   
-                  <p className="text-sm sm:text-base md:text-lg text-stone-350 max-w-2xl mx-auto leading-relaxed font-light">
+                  <motion.p 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: 0.15 }}
+                    className="text-sm sm:text-base md:text-lg text-stone-350 max-w-3xl mx-auto leading-loose font-light"
+                  >
                     An independent hardware analysis collective. Describe your requirements in plain language, find your budget match, or compare side-by-side with 100% evidence-based audits.
-                  </p>
+                  </motion.p>
 
                   {/* PREMIUM AI SEARCH BAR */}
-                  <div className="max-w-2xl mx-auto pt-4" id="home-hero-search-wrap">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: 0.2 }}
+                    className="max-w-2xl mx-auto pt-4" 
+                    id="home-hero-search-wrap"
+                  >
                     <div className="flex items-center rounded-2xl border-2 border-stone-800 bg-[#292524] px-4 py-1.5 shadow-2xl transition-all duration-300 hover:border-amber-900/60 group">
                       <span className="text-amber-400">
                         <Sparkles className="h-5 w-5 fill-amber-900/20" />
@@ -1066,7 +1184,7 @@ export default function App() {
                             setCurrentPage('ai-finder');
                           }
                         }}
-                        className="inline-flex items-center space-x-1.5 rounded-xl bg-amber-800 hover:bg-amber-950 text-[#faf9f6] text-xs font-bold uppercase tracking-wider px-5 py-3 transition-colors shadow-sm cursor-pointer shrink-0"
+                        className="inline-flex items-center space-x-1.5 rounded-xl bg-amber-800 hover:bg-amber-950 text-[#faf9f6] text-xs font-bold uppercase tracking-wider px-5 py-3 transition-all duration-300 hover:scale-[1.02] shadow-sm cursor-pointer shrink-0"
                       >
                         <span>Ask AI</span>
                         <ArrowRight className="h-3.5 w-3.5" />
@@ -1078,6 +1196,7 @@ export default function App() {
                       <span className="text-stone-500 font-bold uppercase tracking-wider text-[10px]">Examples:</span>
                       {[
                         'Gaming phone under ₹25,000',
+                        'Best phone under ₹50,000',
                         'Best laptop for coding',
                         'Running shoes',
                         'Hair dryer',
@@ -1090,30 +1209,35 @@ export default function App() {
                             setAiFinderPreQuery(item);
                             setCurrentPage('ai-finder');
                           }}
-                          className="py-1.5 px-3 rounded-full border border-stone-800 bg-[#242120] hover:border-amber-800 hover:bg-[#1c1917] hover:text-[#faf9f6] text-stone-400 text-xs transition-colors cursor-pointer font-medium"
+                          className="py-1.5 px-3 rounded-full border border-stone-800 bg-[#242120] hover:border-amber-800 hover:bg-[#1c1917] hover:text-[#faf9f6] text-stone-400 text-xs transition-all duration-200 cursor-pointer font-medium hover:scale-105"
                         >
                           {item}
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Trust metrics */}
-                  <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto border-t border-stone-800 pt-8 text-center text-xs text-stone-400 font-medium">
-                    <div>
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: 0.25 }}
+                    className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto border-t border-stone-800 pt-8 text-center text-xs text-stone-400 font-medium"
+                  >
+                    <div className="transition-transform hover:scale-105 duration-300">
                       <span className="block font-display text-xl font-bold text-[#faf9f6] uppercase tracking-wider">100%</span> Handpicked
                     </div>
-                    <div>
+                    <div className="transition-transform hover:scale-105 duration-300">
                       <span className="block font-display text-xl font-bold text-[#faf9f6] uppercase tracking-wider">Honest</span> Reviews
                     </div>
-                    <div>
+                    <div className="transition-transform hover:scale-105 duration-300">
                       <span className="block font-display text-xl font-bold text-[#faf9f6] uppercase tracking-wider">Direct</span> Store Links
                     </div>
-                    <div>
+                    <div className="transition-transform hover:scale-105 duration-300">
                       <span className="block font-display text-xl font-bold text-[#faf9f6] uppercase tracking-wider">Best</span> Prices
                     </div>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               </section>
 
               {/* 2. Core Features Section: Guides users to AI Finder, Smart Comparison, Price Tracker */}
@@ -1473,10 +1597,10 @@ export default function App() {
                             <button
                               key={val}
                               onClick={() => setBudgetMax(val)}
-                              className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-bold font-mono transition-colors text-center border ${
+                              className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-extrabold font-mono transition-all text-center border ${
                                 budgetMax === val 
                                   ? 'bg-amber-600 border-amber-600 text-white' 
-                                  : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
+                                  : 'bg-[#2a2421] border border-[#5c4a3c] text-[#f5f5f0] hover:bg-[#3d332d] hover:border-amber-500/40'
                               }`}
                             >
                               ${val}
@@ -1808,6 +1932,107 @@ export default function App() {
                 <FAQSection faqs={data.faqs} />
               </section>
 
+              {/* STICKY/PINNED GALLERY SHOWCASE SECTION */}
+              <section className="py-32 border-t border-white/5 bg-[#060606] relative overflow-hidden" id="home-sticky-pinned-gallery">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                  {/* Sticky Pinned Row Container */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start relative">
+                    
+                    {/* Left side: Sticky Spotlight Images (Pinned via GSAP ScrollTrigger) */}
+                    <div className="sticky-pinned-left-col w-full h-[350px] sm:h-[450px] lg:h-[600px] rounded-3xl overflow-hidden bg-stone-900 border border-white/10 relative">
+                      
+                      {/* Image 1: Acoustics lab */}
+                      <div className="absolute inset-0 transition-all duration-700 ease-out active-pinned-image-0 opacity-100 z-20">
+                        <img 
+                          src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=1000&auto=format&fit=crop" 
+                          alt="Acoustics Matrix" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                        <div className="absolute bottom-8 left-8 right-8 z-30">
+                          <span className="text-[10px] font-mono text-amber-500 font-bold tracking-widest uppercase">COLUMN 01</span>
+                          <h4 className="font-display text-xl sm:text-2xl font-bold text-[#F5F5F0] mt-1">ACOUSTICS CHAMBER VETTING</h4>
+                        </div>
+                      </div>
+
+                      {/* Image 2: Display calibration */}
+                      <div className="absolute inset-0 transition-all duration-700 ease-out active-pinned-image-1 opacity-0 z-10">
+                        <img 
+                          src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop" 
+                          alt="Display Labs" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                        <div className="absolute bottom-8 left-8 right-8 z-30">
+                          <span className="text-[10px] font-mono text-amber-500 font-bold tracking-widest uppercase">COLUMN 02</span>
+                          <h4 className="font-display text-xl sm:text-2xl font-bold text-[#F5F5F0] mt-1">CALIBRATED SPECTRUM LABS</h4>
+                        </div>
+                      </div>
+
+                      {/* Image 3: Stress matrix */}
+                      <div className="absolute inset-0 transition-all duration-700 ease-out active-pinned-image-2 opacity-0 z-10">
+                        <img 
+                          src="https://images.unsplash.com/photo-1601524909162-be87252be298?q=80&w=1000&auto=format&fit=crop" 
+                          alt="Stress Matrix" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                        <div className="absolute bottom-8 left-8 right-8 z-30">
+                          <span className="text-[10px] font-mono text-amber-500 font-bold tracking-widest uppercase">COLUMN 03</span>
+                          <h4 className="font-display text-xl sm:text-2xl font-bold text-[#F5F5F0] mt-1">THERMAL PRESSURE LOOPS</h4>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Right side: Scrolling Stack Cards (Triggers active image changes and pins) */}
+                    <div className="space-y-12 lg:space-y-24 py-12 lg:py-24" id="sticky-pinned-right-col">
+                      
+                      {/* Card 1 */}
+                      <div className="sticky-pinned-text-block rounded-3xl border border-white/10 bg-[#121212]/80 p-8 sm:p-12 space-y-4 shadow-2xl transition-all duration-500 hover:border-amber-600/40 relative clickable cursor-pointer" data-cursor-label="Verify">
+                        <span className="text-xs font-mono text-amber-500 font-bold tracking-wider">01 / TESTING ACOUSTICS</span>
+                        <h4 className="font-display text-xl sm:text-2xl font-bold text-[#F5F5F0]">Decibel and ANC Testing</h4>
+                        <p className="text-stone-400 text-sm font-light leading-relaxed">
+                          We test every earbud and headphone inside custom-built soundproofing chambers, plotting exact frequency response curves against real-world ambient noise patterns to isolate true performance under pressure.
+                        </p>
+                        <div className="pt-4 flex items-center space-x-2 text-xs font-mono text-amber-500 font-bold">
+                          <span>VIEW SPECS</span>
+                          <span>→</span>
+                        </div>
+                      </div>
+
+                      {/* Card 2 */}
+                      <div className="sticky-pinned-text-block rounded-3xl border border-white/10 bg-[#121212]/80 p-8 sm:p-12 space-y-4 shadow-2xl transition-all duration-500 hover:border-amber-600/40 relative clickable cursor-pointer" data-cursor-label="Verify">
+                        <span className="text-xs font-mono text-amber-500 font-bold tracking-wider">02 / COLOR METRICS</span>
+                        <h4 className="font-display text-xl sm:text-2xl font-bold text-[#F5F5F0]">Color Accuracy & Peak Nits</h4>
+                        <p className="text-stone-400 text-sm font-light leading-relaxed">
+                          Laptops and monitors are analyzed using spectrophotometers and professional SpyderX colorimeters. We measure Delta E deviation, color gamut coverage (DCI-P3, Adobe RGB), and brightness consistency.
+                        </p>
+                        <div className="pt-4 flex items-center space-x-2 text-xs font-mono text-amber-500 font-bold">
+                          <span>VIEW SPECS</span>
+                          <span>→</span>
+                        </div>
+                      </div>
+
+                      {/* Card 3 */}
+                      <div className="sticky-pinned-text-block rounded-3xl border border-[#ffffff0a] bg-[#121212]/80 p-8 sm:p-12 space-y-4 shadow-2xl transition-all duration-500 hover:border-amber-600/40 relative clickable cursor-pointer" data-cursor-label="Verify">
+                        <span className="text-xs font-mono text-amber-500 font-bold tracking-wider">03 / PERFORMANCE LOOPS</span>
+                        <h4 className="font-display text-xl sm:text-2xl font-bold text-[#F5F5F0]">Thermal Throttling & Battery Drain</h4>
+                        <p className="text-stone-400 text-sm font-light leading-relaxed">
+                          Our automated load simulation loops run for 12 consecutive hours to measure exactly how devices behave under sustained stress. We log power draw, surface temperatures, and thermal clock degradation.
+                        </p>
+                        <div className="pt-4 flex items-center space-x-2 text-xs font-mono text-amber-500 font-bold">
+                          <span>VIEW SPECS</span>
+                          <span>→</span>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              </section>
+
             </motion.div>
           )}
 
@@ -2035,21 +2260,9 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8 space-y-6"
+              className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-6"
             >
-              <h1 className="font-display text-3xl font-extrabold text-slate-900">About Our Editorial Team</h1>
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                Welcome to <strong className="text-slate-950 font-bold">TechAffiliate Premium</strong>, a completely independent hardware analysis collective established in 2026. 
-              </p>
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                We believe that the consumer electronics review ecosystem has been severely broken by paid corporate sponsorships, undisclosed brand placements, and marketing buzzwords. Our goal is simple: to provide objective, mathematical specification audits, honest physical testing benchmarks, and explicit "who should avoid" guides so that you can make the absolute best choices for your budget and workflow.
-              </p>
-              <div className="rounded-2xl bg-blue-50/50 p-6 border border-blue-100">
-                <h3 className="font-display font-bold text-blue-900 text-base mb-2">Our Testing Philosophy</h3>
-                <p className="text-slate-700 text-xs sm:text-sm leading-relaxed">
-                  We buy most of the products we review ourselves, or borrow them from retail partners without accepting alterations to our editorial scoring. If a headphone leaks sound, we say so. If a premium adventure smartwatch has bulk issues on slender wrists, we highlight it. We value the trust of our readers above all else.
-                </p>
-              </div>
+              <AboutPage />
             </motion.div>
           )}
 
@@ -2061,64 +2274,14 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mx-auto max-w-xl px-4 py-16 sm:px-6 lg:px-8"
-              id="contact-page-view"
+              className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
             >
-              <div className="rounded-3xl border border-slate-100 bg-white p-6 sm:p-8 shadow-xl">
-                <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
-                  Contact Our Editorial Desk
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mb-6">
-                  Have a correction, feedback on our comparison charts, or a specific gadget suggestion you want us to audit next? Get in touch below.
-                </p>
-
-                {contactSuccess ? (
-                  <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-5 text-center text-emerald-800 space-y-2">
-                    <Check className="h-8 w-8 mx-auto text-emerald-500" />
-                    <h4 className="font-bold">Message Dispatched Successfully</h4>
-                    <p className="text-xs">
-                      Thank you for contacting us! An editorial support staff member will respond to your inquiry within 24 business hours.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleContactSubmit} className="space-y-4" id="contact-form">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Your Name</label>
-                      <input
-                        type="text" required
-                        value={contactForm.name} onChange={e => setContactForm({ ...contactForm, name: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-blue-500"
-                        placeholder="e.g. David Miller"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Professional Email</label>
-                      <input
-                        type="email" required
-                        value={contactForm.email} onChange={e => setContactForm({ ...contactForm, email: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-blue-500"
-                        placeholder="david@example.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Message Description</label>
-                      <textarea
-                        rows={4} required
-                        value={contactForm.message} onChange={e => setContactForm({ ...contactForm, message: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-blue-500"
-                        placeholder="Provide deep details about your feedback or product suggestion..."
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="inline-flex w-full items-center justify-center space-x-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 py-3 text-sm font-semibold text-white shadow"
-                    >
-                      <span>Send Message</span>
-                      <Send className="h-4 w-4" />
-                    </button>
-                  </form>
-                )}
-              </div>
+              <ContactPage 
+                contactForm={contactForm}
+                setContactForm={setContactForm}
+                contactSuccess={contactSuccess}
+                onSubmit={handleContactSubmit}
+              />
             </motion.div>
           )}
 
@@ -2130,23 +2293,9 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8 space-y-6 text-sm text-slate-600 leading-relaxed"
+              className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
             >
-              <h1 className="font-display text-3xl font-extrabold text-slate-900">Privacy Policy</h1>
-              <p>
-                <strong>Last Updated: July 10, 2026</strong>
-              </p>
-              <p>
-                At TechAffiliate Premium, we respect your privacy and are committed to safeguarding any personal data you share with us. This Privacy Policy outlines what information we track, why we collect it, and how we handle cookies, browser cache, and affiliate referral sessions safely.
-              </p>
-              <h3 className="font-display font-bold text-slate-900 text-base mt-6">1. Information We Collect</h3>
-              <p>
-                We collect non-personal analytics telemetry including page views, click behaviors on affiliate links, specific search queries inside our database, and estimated reading durations. This data is used strictly to optimize page performance and compute accurate Conversion Rate Optimization (CRO) reports shown in our transparent administrator dashboards. We do not sell or lease user information to third-party advertisers.
-              </p>
-              <h3 className="font-display font-bold text-slate-900 text-base mt-6">2. Affiliate Partner Cookies</h3>
-              <p>
-                When you click on purchase referral buttons (such as "Check Price on Amazon" or "Flipkart Deal"), our partner advertising networks deploy a standard, cryptographically safe tracking cookie. This cookie tracks whether you complete a purchase so that we may receive a small commission, at absolutely zero additional charge to you. You may disable cookies inside your browser settings if preferred.
-              </p>
+              <PrivacyPolicyPage />
             </motion.div>
           )}
 
@@ -2158,23 +2307,23 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8 space-y-6 text-sm text-slate-600 leading-relaxed"
+              className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
             >
-              <h1 className="font-display text-3xl font-extrabold text-slate-900">Terms of Service</h1>
-              <p>
-                <strong>Effective Date: July 10, 2026</strong>
-              </p>
-              <p>
-                By accessing, searching, or interacting with the TechAffiliate Premium platform, you agree to comply with and be bound by the following Terms of Service. If you do not accept these guidelines, please stop using our review and comparison tools immediately.
-              </p>
-              <h3 className="font-display font-bold text-slate-900 text-base mt-6">1. Intellectual Property</h3>
-              <p>
-                All review summaries, technical specification matrices, in-depth pros/cons essays, custom sitemap configurations, and graphics are the exclusive property of TechAffiliate Premium. You are strictly forbidden from scraping, redistributing, or copy-pasting our reviews into other online commercial projects without prior written permission.
-              </p>
-              <h3 className="font-display font-bold text-slate-900 text-base mt-6">2. Limitation of Liability</h3>
-              <p>
-                While we make every effort to verify specification details, pricing models, and coupon validity, all content is published "as is". We are not responsible for pricing shifts on Amazon or Flipkart, product out-of-stock events, or technical failures occurring during your checkout sessions on respective merchant channels.
-              </p>
+              <TermsPage />
+            </motion.div>
+          )}
+
+          {/* ==========================================================
+              TRUST ELEMENT VIEW: COOKIE POLICY
+              ========================================================== */}
+          {currentPage === 'cookies' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
+            >
+              <CookiePolicyPage />
             </motion.div>
           )}
 
@@ -2186,24 +2335,9 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8 space-y-6 text-sm text-slate-600 leading-relaxed"
-              id="disclosure-page-view"
+              className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
             >
-              <h1 className="font-display text-3xl font-extrabold text-slate-900">Affiliate Advertising Disclosure</h1>
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/10 p-6 space-y-4">
-                <p className="font-medium text-slate-800">
-                  Transparency and honesty are the foundation of our connection with our readers.
-                </p>
-                <p>
-                  We are a professional, independent tech evaluation platform. In compliance with Federal Trade Commission (FTC) guidelines, please be advised that several of the product listings, buying comparisons, and sitemap reference links on this website contain custom affiliate tracking URLs (including Amazon Associates, Flipkart Affiliate Network, and EarnKaro).
-                </p>
-                <p>
-                  This means that if you click on one of our recommendation buttons and complete a transaction on the merchant page, we receive a small referral bounty from that company. This transaction occurs at <strong className="text-slate-900 font-bold">no extra cost to you</strong>.
-                </p>
-                <p>
-                  Crucially, this financial setup does not alter our editorial integrity. We do not accept bribes, sponsored content overrides, or paid ratings boost proposals. If a product fails to deliver on its specifications during our testing, we highlight those defects clearly in the "Cons" and "Who should avoid" tables.
-                </p>
-              </div>
+              <AffiliateDisclosurePage />
             </motion.div>
           )}
 
@@ -2215,18 +2349,9 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8 space-y-6 text-sm text-slate-600 leading-relaxed"
+              className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
             >
-              <h1 className="font-display text-3xl font-extrabold text-slate-900">Legal & Technical Disclaimer</h1>
-              <p>
-                The information, technical specifications, and purchase recommendations displayed on TechAffiliate Premium are for informational and educational purposes only.
-              </p>
-              <p>
-                <strong>Battery & Audio Decibel Safety:</strong> Our evaluations of active noise-cancelling (ANC) headphones and wireless earpieces measure acoustics based on standard consumer equipment. Listeners must refrain from operating headphones at maximum volume levels to avoid permanent ear canal strain.
-              </p>
-              <p>
-                <strong>Rugged Wearables Disclaimer:</strong> Smartwatch depth limits (such as water-resistance to 100 meters on the Apple Watch Ultra 2) are verified in laboratory environments. Recreational diving or alpine mountaineering must always be accompanied by certified equipment and physical backup devices; do not rely solely on consumer smartwatches during hazardous operations.
-              </p>
+              <DisclaimerPage />
             </motion.div>
           )}
 
@@ -2237,7 +2362,7 @@ export default function App() {
       <LargeNewsletterSection />
 
       {/* Footer component */}
-      <Footer onNavigate={handleNavigate} onReplayWelcome={handleReplayWelcome} />
+      <Footer onNavigate={handleNavigate} />
 
       {/* Compact Scroll Banner (at 60% scroll) & Exit Intent Popup */}
       <CompactScrollBanner />
@@ -2299,13 +2424,7 @@ export default function App() {
         onAffiliateClick={handleAffiliateClick}
       />
 
-      {/* Premium Welcome Experience */}
-      <AnimatePresence>
-        {showWelcome && (
-          <PremiumWelcome onComplete={handleWelcomeComplete} />
-        )}
-      </AnimatePresence>
-
+      </SmoothScroll>
     </div>
   );
 }

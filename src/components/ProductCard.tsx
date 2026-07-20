@@ -47,20 +47,29 @@ export default function ProductCard({
 
   return (
     <motion.div
-      whileHover={{ y: -4, transition: { duration: 0.25, ease: "easeOut" } }}
-      className="relative flex flex-col overflow-hidden rounded-3xl border border-amber-100/30 bg-white shadow-sm hover:shadow-lg hover:border-amber-200/50 transition-all duration-300"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      whileHover={{ 
+        y: -10, 
+        scale: 1.015,
+        rotate: 0.3,
+        boxShadow: "0 25px 50px -12px rgba(180, 83, 9, 0.12), 0 0 20px rgba(180, 83, 9, 0.08)",
+        transition: { type: "spring", stiffness: 400, damping: 25 }
+      }}
+      className="relative flex flex-col overflow-hidden rounded-3xl border border-amber-100/30 bg-white shadow-sm hover:border-amber-550/40 transition-colors duration-300"
       id={`product-card-${product.id}`}
     >
       {/* Upper Badges Area */}
       <div className="absolute top-3 left-3 z-10 flex flex-col space-y-1">
         {product.isBestSeller && (
-          <span className="inline-flex items-center space-x-1 rounded-full bg-amber-800 px-2.5 py-1 text-[9px] uppercase tracking-wider font-bold text-[#faf9f6] shadow-sm">
-            <CheckCircle className="h-3 w-3" />
+          <span className="inline-flex items-center space-x-1 rounded-full bg-amber-800 px-2.5 py-1 text-[9px] uppercase tracking-wider font-extrabold text-[#0a0a0a] shadow-sm">
+            <CheckCircle className="h-3 w-3 text-[#0a0a0a]" />
             <span>Best Seller</span>
           </span>
         )}
         {product.isEditorsChoice && (
-          <span className="inline-flex items-center space-x-1 rounded-full bg-stone-900 px-2.5 py-1 text-[9px] uppercase tracking-wider font-bold text-[#faf9f6] shadow-sm">
+          <span className="inline-flex items-center space-x-1 rounded-full bg-[#161616] px-2.5 py-1 text-[9px] uppercase tracking-wider font-extrabold text-[#faf9f6] border border-white/10 shadow-sm">
             <Award className="h-3 w-3 text-amber-500" />
             <span>Editor's Pick</span>
           </span>

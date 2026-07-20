@@ -194,8 +194,8 @@ export function LargeNewsletterSection() {
   return (
     <section className="relative overflow-hidden bg-stone-950 py-20 px-4 sm:px-6 lg:px-8 border-t border-stone-900" id="large-newsletter">
       {/* Decorative premium radial gradients */}
-      <div className="absolute top-0 left-1/4 h-80 w-80 rounded-full bg-amber-500/5 blur-[120px]" />
-      <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-amber-600/5 blur-[120px]" />
+      <div className="absolute top-0 left-1/4 h-80 w-80 rounded-full bg-amber-500/10 blur-[120px]" />
+      <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-amber-600/10 blur-[120px]" />
 
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -209,7 +209,7 @@ export function LargeNewsletterSection() {
               <h2 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
                 Never Miss the <span className="text-amber-400 italic font-light">Best Deal</span>
               </h2>
-              <p className="text-stone-400 text-sm leading-relaxed font-light">
+              <p className="text-stone-300 text-sm leading-relaxed font-normal">
                 Get AI-powered buying guides, price-drop alerts, expert comparisons, product launches, exclusive shopping tips, and weekly curated recommendations.
               </p>
             </div>
@@ -221,7 +221,7 @@ export function LargeNewsletterSection() {
                 <span>Join Now for Instant Verification</span>
               </h4>
               <SubscriptionForm source="homepage" />
-              <p className="text-[10px] text-stone-500 mt-3 text-center leading-relaxed font-light">
+              <p className="text-[10px] text-stone-400 mt-3 text-center leading-relaxed font-normal">
                 We respect your inbox. Unsubscribe anytime in one single click. No spam. Secure SSL encryption.
               </p>
             </div>
@@ -234,17 +234,17 @@ export function LargeNewsletterSection() {
               return (
                 <div 
                   key={index}
-                  className="group relative overflow-hidden bg-stone-900/20 hover:bg-stone-900/40 border border-stone-900 hover:border-amber-500/20 p-5 rounded-2xl transition-all duration-300 backdrop-blur-xs"
+                  className="group relative overflow-hidden bg-stone-900/40 hover:bg-stone-900/60 border border-stone-800/80 hover:border-amber-500/30 p-5 rounded-2xl transition-all duration-300 backdrop-blur-xs"
                 >
                   <div className="flex items-start space-x-3.5">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/10 group-hover:bg-amber-500 group-hover:text-stone-950 text-amber-400 transition-all duration-300">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-[#0a0a0a] text-amber-400 transition-all duration-300">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-stone-100 group-hover:text-amber-400 transition-colors duration-300">
                         {benefit.title}
                       </h4>
-                      <p className="text-stone-400 text-xs leading-relaxed font-light">
+                      <p className="text-stone-300/90 text-xs leading-relaxed font-normal">
                         {benefit.desc}
                       </p>
                     </div>
@@ -325,10 +325,10 @@ export function CompactScrollBanner() {
                 <span className="text-[9px] font-extrabold uppercase tracking-widest text-amber-500 font-sans">
                   Exclusive Invitation
                 </span>
-                <h3 className="font-display text-base font-bold text-white tracking-tight leading-tight">
+                <h3 className="font-display text-base font-extrabold text-amber-400 tracking-tight leading-tight">
                   Get our exclusive curated deal guides
                 </h3>
-                <p className="text-stone-400 text-xs leading-relaxed font-light">
+                <p className="text-stone-200 text-xs leading-relaxed font-normal">
                   Join our weekly newsletter to obtain premium buying shortcuts, handpicked coupons, and direct AI recommendation scorecards.
                 </p>
                 

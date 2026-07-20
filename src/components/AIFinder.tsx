@@ -89,6 +89,11 @@ export default function AIFinder({
   const [identifiedCategory, setIdentifiedCategory] = useState<string | null>(null);
   const [matchedBrand, setMatchedBrand] = useState<string | null>(null);
 
+  // Premium category transition states
+  const [activeCategoryTab, setActiveCategoryTab] = useState<string>('');
+  const [tabAnalysisProgress, setTabAnalysisProgress] = useState(0);
+  const [transitionStep, setTransitionStep] = useState<'idle' | 'button-active' | 'tab-analyzing' | 'fade-out' | 'shimmer' | 'fade-in' | 'badge-reveal'>('idle');
+
   useEffect(() => {
     if (initialQuery) {
       setQuery(initialQuery);
@@ -165,9 +170,108 @@ export default function AIFinder({
     triggerSearch(text);
   };
 
+  const triggerDirectAIRec = (searchQuery: string) => {
+    const q = searchQuery.toLowerCase();
+    let cat = '';
+    let ans: Record<string, string> = {};
+
+    if (q.includes('laptop') || q.includes('coding')) {
+      cat = SUPPORTED_CATEGORIES.LAPTOPS;
+      ans = {
+        budget: '₹1,00,000',
+        purpose: 'Coding & Development',
+        ram: '16GB RAM (Recommended developer baseline)',
+        graphics: 'Integrated Graphics is perfectly fine',
+        display_res: '1440p / High refresh esports panel',
+        brand: 'No Preference'
+      };
+    } else if (q.includes('50,000') || q.includes('50k')) {
+      cat = SUPPORTED_CATEGORIES.SMARTPHONES;
+      ans = {
+        budget: '₹50,000',
+        purpose: 'Camera',
+        zoom: 'Optical Portrait Zoom (3x - 5x Telephoto)',
+        night_mode: 'Extremely Important (Pro Nightography)',
+        video_stabilization: '4K 60FPS action-cam stabilization',
+        selfie: 'Standard occasional selfies',
+        brand: 'No Preference'
+      };
+    } else if (q.includes('25,000') || q.includes('25k')) {
+      cat = SUPPORTED_CATEGORIES.SMARTPHONES;
+      ans = {
+        budget: '₹25,000',
+        purpose: 'Gaming',
+        performance: 'High Performance (Dimensity 8300 / Snapdragon 7 Gen 3)',
+        refresh_rate: '120Hz smooth standard',
+        cooling: 'Moderate heat control is fine',
+        battery: 'Fast-charging priority (5000mAh with 80W+ charger)',
+        brand: 'No Preference'
+      };
+    } else if (q.includes('shoe') || q.includes('sneaker') || q.includes('running')) {
+      cat = SUPPORTED_CATEGORIES.RUNNING_SHOES;
+      ans = {
+        budget: '₹8,000',
+        terrain: 'Daily road running',
+        pronation: 'Neutral (Standard)',
+        cushioning: 'Balanced standard cushion',
+        brand: 'No Preference'
+      };
+    } else if (q.includes('watch') || q.includes('wearable')) {
+      cat = SUPPORTED_CATEGORIES.SMARTWATCHES;
+      ans = {
+        budget: '₹10,000',
+        purpose: 'Fitness & heart tracking',
+        brand: 'No Preference'
+      };
+    }
+
+    if (cat) {
+      // Transition to analysis screen state first to run the premium checklist animation
+      setScreenState('analysis');
+      setAnalysisProgress(0);
+      
+      const startTime = Date.now();
+      const duration = 4000; // exactly 4.0 seconds
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        let progress = Math.min(100, Math.floor((elapsed / duration) * 100));
+        setAnalysisProgress(progress);
+        
+        if (progress >= 100) {
+          clearInterval(progressInterval);
+          
+          // Wait a satisfying moment at 100% (300ms) before completing and transitioning to results
+          setTimeout(() => {
+            // Apply target query and category specs
+            setQuery(searchQuery);
+            setIdentifiedCategory(cat);
+            setAnswers(ans);
+            setScreenState('results');
+            
+            // Trigger beautiful slide up & fade-in transitions
+            setTransitionStep('fade-in');
+            setTimeout(() => {
+              setTransitionStep('badge-reveal');
+              setTimeout(() => {
+                setTransitionStep('idle');
+              }, 500); // badge-reveal duration (slower/luxurious)
+            }, 1300); // fade-in/slide-up duration (slower/luxurious)
+          }, 300); // slight delay after progress hits 100% (300ms)
+        }
+      }, 50); // check and update every 50ms for ultra smooth progress bar filling
+      
+      return true;
+    }
+    return false;
+  };
+
   // Perform Category Identification based on Natural Language query
   const triggerSearch = (searchQuery: string) => {
     if (!searchQuery.trim()) return;
+
+    if (triggerDirectAIRec(searchQuery)) {
+      return;
+    }
 
     // Transition to loading/processing screen
     setScreenState('processing');
@@ -1068,6 +1172,13 @@ export default function AIFinder({
           clearInterval(interval);
           setTimeout(() => {
             setScreenState('results');
+            setTransitionStep('fade-in');
+            setTimeout(() => {
+              setTransitionStep('badge-reveal');
+              setTimeout(() => {
+                setTransitionStep('idle');
+              }, 350); // badge-reveal duration
+            }, 900); // fade-in duration
           }, 800);
           return 100;
         }
@@ -1238,7 +1349,7 @@ export default function AIFinder({
                 Try asking like a human
               </span>
               <div className="flex flex-wrap justify-center gap-2 max-w-xl mx-auto">
-                {['Gaming phone under ₹25,000', 'Best laptop for coding', 'Running shoes', 'Hair dryer', 'Refrigerator', 'Smartwatch'].map((chip) => (
+                {['Gaming phone under ₹25,000', 'Best phone under ₹50,000', 'Best laptop for coding', 'Running shoes', 'Hair dryer', 'Refrigerator', 'Smartwatch'].map((chip) => (
                   <button
                     key={chip}
                     onClick={() => {
@@ -1599,6 +1710,148 @@ export default function AIFinder({
               </div>
             </div>
 
+            {/* Premium Category Switcher Tab Bar */}
+            <div className="flex flex-col items-center space-y-2 border-b border-stone-100 pb-6">
+              <span className="text-[10px] uppercase font-sans font-black tracking-widest text-stone-400">
+                Switch AI Recommendation Category
+              </span>
+              <div className="flex flex-wrap justify-center gap-2 max-w-3xl">
+                {[
+                  { name: 'Best Phone Under ₹50K', query: 'Best phone under ₹50,000', icon: Smartphone },
+                  { name: 'Best Laptop for Coding', query: 'Best laptop for coding', icon: Laptop },
+                  { name: 'Gaming Phone Under ₹25K', query: 'Gaming phone under ₹25,000', icon: Smartphone },
+                  { name: 'Running Shoes', query: 'Running shoes', icon: Footprints },
+                  { name: 'Smartwatch Tracker', query: 'Smartwatch', icon: Watch }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  // Determine if this tab is active
+                  const isCurrentTab = query.toLowerCase() === tab.query.toLowerCase() || 
+                    (tab.query === 'Best phone under ₹50,000' && query.toLowerCase().includes('50')) ||
+                    (tab.query === 'Best laptop for coding' && query.toLowerCase().includes('laptop')) ||
+                    (tab.query === 'Gaming phone under ₹25,000' && query.toLowerCase().includes('25')) ||
+                    (tab.query === 'Running shoes' && query.toLowerCase().includes('shoe')) ||
+                    (tab.query === 'Smartwatch' && query.toLowerCase().includes('watch'));
+
+                  const isActiveAnimation = transitionStep === 'button-active' && activeCategoryTab === tab.name;
+
+                  return (
+                    <button
+                      key={tab.name}
+                      onClick={() => {
+                        if (isCurrentTab) return;
+                        setActiveCategoryTab(tab.name);
+                        
+                        // Run transition sequence
+                        setTransitionStep('button-active');
+                        setTimeout(() => {
+                          setTransitionStep('tab-analyzing');
+                          setTabAnalysisProgress(0);
+                          
+                          const startTime = Date.now();
+                          const duration = 4000; // exactly 4.0 seconds
+                          const progressInterval = setInterval(() => {
+                            const elapsed = Date.now() - startTime;
+                            let progress = Math.min(100, Math.floor((elapsed / duration) * 100));
+                            setTabAnalysisProgress(progress);
+                            
+                            if (progress >= 100) {
+                              clearInterval(progressInterval);
+                              
+                              // Trigger fade out of old cards
+                              setTimeout(() => {
+                                setTransitionStep('fade-out');
+                                
+                                // Apply target category specs AFTER old cards are completely faded out (600ms)
+                                setTimeout(() => {
+                                  let cat = '';
+                                  let ans: Record<string, string> = {};
+                                  if (tab.query === 'Best laptop for coding') {
+                                    cat = SUPPORTED_CATEGORIES.LAPTOPS;
+                                    ans = {
+                                      budget: '₹1,00,000',
+                                      purpose: 'Coding & Development',
+                                      ram: '16GB RAM (Recommended developer baseline)',
+                                      graphics: 'Integrated Graphics is perfectly fine',
+                                      display_res: '1440p / High refresh esports panel',
+                                      brand: 'No Preference'
+                                    };
+                                  } else if (tab.query === 'Best phone under ₹50,000') {
+                                    cat = SUPPORTED_CATEGORIES.SMARTPHONES;
+                                    ans = {
+                                      budget: '₹50,000',
+                                      purpose: 'Camera',
+                                      zoom: 'Optical Portrait Zoom (3x - 5x Telephoto)',
+                                      night_mode: 'Extremely Important (Pro Nightography)',
+                                      video_stabilization: '4K 60FPS action-cam stabilization',
+                                      selfie: 'Standard occasional selfies',
+                                      brand: 'No Preference'
+                                    };
+                                  } else if (tab.query === 'Gaming phone under ₹25,000') {
+                                    cat = SUPPORTED_CATEGORIES.SMARTPHONES;
+                                    ans = {
+                                      budget: '₹25,000',
+                                      purpose: 'Gaming',
+                                      performance: 'High Performance (Dimensity 8300 / Snapdragon 7 Gen 3)',
+                                      refresh_rate: '120Hz smooth standard',
+                                      cooling: 'Moderate heat control is fine',
+                                      battery: 'Fast-charging priority (5000mAh with 80W+ charger)',
+                                      brand: 'No Preference'
+                                    };
+                                  } else if (tab.query === 'Running shoes') {
+                                    cat = SUPPORTED_CATEGORIES.RUNNING_SHOES;
+                                    ans = {
+                                      budget: '₹8,000',
+                                      terrain: 'Daily road running',
+                                      pronation: 'Neutral (Standard)',
+                                      cushioning: 'Balanced standard cushion',
+                                      brand: 'No Preference'
+                                    };
+                                  } else if (tab.query === 'Smartwatch') {
+                                    cat = SUPPORTED_CATEGORIES.SMARTWATCHES;
+                                    ans = {
+                                      budget: '₹10,000',
+                                      purpose: 'Fitness & heart tracking',
+                                      brand: 'No Preference'
+                                    };
+                                  }
+                                  setQuery(tab.query);
+                                  setIdentifiedCategory(cat);
+                                  setAnswers(ans);
+                                  
+                                  // Trigger fade in and slide up (1300ms duration)
+                                  setTransitionStep('fade-in');
+                                  
+                                  setTimeout(() => {
+                                    // Trigger badge-reveal at the end of slide up
+                                    setTransitionStep('badge-reveal');
+                                    
+                                    setTimeout(() => {
+                                      setTransitionStep('idle');
+                                      setActiveCategoryTab('');
+                                    }, 500); // badge-reveal duration (slower/luxurious)
+                                  }, 1300); // fade-in/slide-up duration (slower/luxurious)
+                                }, 600); // fade-out old cards duration (slower/luxurious)
+                              }, 300); // slight delay after progress hits 100% (300ms)
+                            }
+                          }, 50); // check and update every 50ms for ultra smooth progress bar filling
+                        }, 250); // button-active duration (slower/luxurious)
+                      }}
+                      className={`inline-flex items-center space-x-2 py-2 px-3.5 rounded-full border text-xs font-bold transition-all duration-200 cursor-pointer ${
+                        isCurrentTab
+                          ? 'bg-amber-850 border-amber-850 text-white shadow-md'
+                          : isActiveAnimation
+                            ? 'bg-amber-700 border-amber-700 text-white scale-95 shadow-inner'
+                            : 'bg-white border-stone-200 hover:border-stone-300 text-stone-600 hover:text-stone-900 shadow-sm'
+                      }`}
+                    >
+                      <Icon className={`h-3.5 w-3.5 ${isCurrentTab ? 'text-amber-300' : 'text-stone-400'}`} />
+                      <span>{tab.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* WATCHLIST TRIGGER BUTTON FLOATING & ACTIONS HEADER */}
             <div className="flex items-center justify-between border-b border-stone-200 pb-4">
               <div className="text-stone-500 text-xs font-semibold uppercase tracking-wider">
@@ -1619,7 +1872,7 @@ export default function AIFinder({
             </div>
 
             {/* Empty state safeguard */}
-            {recommendedProducts.length === 0 ? (
+            {recommendedProducts.length === 0 && transitionStep === 'idle' ? (
               <div className="text-center py-16 bg-white border border-stone-200 rounded-3xl p-8 shadow-sm space-y-4">
                 <AlertCircle className="h-10 w-10 text-stone-400 mx-auto" />
                 <h3 className="font-display text-lg font-bold text-stone-950">No products fit your precise profile.</h3>
@@ -1634,20 +1887,153 @@ export default function AIFinder({
                 </button>
               </div>
             ) : (
-              /* Product Recommendation Cards Stack */
-              <div className="space-y-10" id="ai-recommendations-list">
-                {recommendedProducts.map((product, index) => {
-                  const isTopMatch = index === 0;
-                  const isWatched = watchlist.includes(product.id);
-                  const isCompared = compareList.includes(product.dbProductId || product.id);
-                  const isExpanded = expandedProductId === product.id;
+              <div 
+                className={`relative ${transitionStep !== 'idle' ? 'min-h-[550px]' : ''}`} 
+                id="ai-recommendations-list-container"
+              >
+                {/* Beautiful Premium Glassmorphic Loader Overlay */}
+                {(transitionStep === 'tab-analyzing' || transitionStep === 'fade-out') && (
+                  <div 
+                    className={`absolute inset-0 bg-stone-100/45 backdrop-blur-md rounded-3xl z-30 flex flex-col items-center justify-start pt-12 pb-20 px-6 sm:px-10 text-center transition-all duration-500 ease-out ${
+                      transitionStep === 'fade-out' ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
+                    }`} 
+                    id="ai-tab-analysis-overlay"
+                  >
+                    <div className="max-w-md w-full space-y-10 bg-white border border-stone-200/60 rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden mt-8 animate-fade-in">
+                      {/* Premium Holographic/Scanning Graphic */}
+                      <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-full border border-stone-100" />
+                        <div className="absolute inset-0 rounded-full border-b-2 border-l-2 border-amber-800 animate-spin-slow" />
+                        <div className="absolute inset-4 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center shadow-inner">
+                          <Sparkles className="h-8 w-8 text-amber-800 animate-pulse" />
+                        </div>
+                      </div>
 
-                  return (
+                      <div className="space-y-3">
+                        <h2 className="font-display text-2xl font-black text-stone-900 leading-tight">
+                          Re-Evaluating Curations
+                        </h2>
+                        <p className="text-stone-500 text-sm font-light max-w-sm mx-auto">
+                          "Matching catalog listings against your dynamically updated focus criteria."
+                        </p>
+                      </div>
+
+                      {/* Animated Checklist Section */}
+                      <div className="max-w-md mx-auto bg-stone-50 border border-stone-150/60 rounded-2xl p-6 text-left space-y-4">
+                        {[
+                          { label: 'Understanding your budget', val: 16 },
+                          { label: 'Matching your priorities', val: 33 },
+                          { label: 'Comparing specifications', val: 50 },
+                          { label: 'Evaluating value for money', val: 66 },
+                          { label: 'Reviewing trusted product information', val: 83 },
+                          { label: 'Ranking the best products', val: 100 }
+                        ].map((step, idx) => {
+                          const isChecked = tabAnalysisProgress >= step.val;
+                          const isActive = tabAnalysisProgress >= (idx > 0 ? [16, 33, 50, 66, 83][idx - 1] : 0) && tabAnalysisProgress < step.val;
+                          return (
+                            <div key={idx} className="flex items-center justify-between py-1 border-b border-stone-200/40 last:border-0">
+                              <span className={`text-xs font-sans tracking-wide transition-colors duration-300 ${
+                                isChecked ? 'text-stone-900 font-medium' : isActive ? 'text-amber-800 font-semibold' : 'text-stone-400 font-light'
+                              }`}>
+                                {step.label}
+                              </span>
+                              <div className="flex items-center justify-center h-5 w-5">
+                                {isChecked ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 animate-fade-in" />
+                                ) : isActive ? (
+                                  <RefreshCw className="h-3 w-3 text-amber-700 animate-spin" />
+                                ) : (
+                                  <div className="h-2 w-2 rounded-full bg-stone-200" />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Subdued progress line */}
+                      <div className="space-y-2 text-left max-w-sm mx-auto">
+                        <div className="flex justify-between items-center text-[10px] font-sans font-bold text-stone-400 uppercase tracking-widest">
+                          <span>Vetting Database Curations</span>
+                          <span>{tabAnalysisProgress}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden relative border border-stone-200/50">
+                          <div 
+                            className="h-full bg-amber-800 transition-all duration-150"
+                            style={{ width: `${tabAnalysisProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Product Recommendation Cards Stack */}
+                {transitionStep === 'shimmer' ? (
+                  /* Beautiful Loading Shimmer Skeleton Cards */
+                  <div className="space-y-10" id="ai-shimmer-skeleton-list">
+                  {[1, 2].map((id) => (
+                    <div
+                      key={id}
+                      className="relative border border-stone-200 bg-white rounded-3xl p-6 sm:p-8 shadow-sm animate-pulse"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                        {/* LEFT: Image Shimmer */}
+                        <div className="md:col-span-4 flex flex-col items-center space-y-5">
+                          <div className="aspect-square w-full max-w-[200px] bg-stone-100 rounded-2xl border border-stone-200/30" />
+                          <div className="w-full h-8 bg-stone-100 rounded-xl" />
+                        </div>
+
+                        {/* RIGHT: Main Match Info Shimmer */}
+                        <div className="md:col-span-8 space-y-6">
+                          <div className="border-b border-stone-100 pb-4 space-y-3">
+                            <div className="h-4 w-32 bg-stone-100 rounded" />
+                            <div className="h-7 w-3/4 bg-stone-100 rounded" />
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="h-3 w-1/3 bg-stone-100 rounded" />
+                            <div className="space-y-2">
+                              <div className="h-3 w-5/6 bg-stone-100 rounded" />
+                              <div className="h-3 w-4/6 bg-stone-100 rounded" />
+                              <div className="h-3 w-full bg-stone-100 rounded" />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            <div className="h-24 bg-stone-50 rounded-2xl border border-stone-100" />
+                            <div className="h-24 bg-stone-50 rounded-2xl border border-stone-100" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div 
+                  className={`space-y-10 transition-all duration-1000 ease-out ${
+                    transitionStep === 'fade-out' 
+                      ? 'opacity-0 translate-y-4 blur-sm pointer-events-none scale-98' 
+                      : transitionStep === 'tab-analyzing'
+                        ? 'blur-[2px] pointer-events-none'
+                        : transitionStep === 'fade-in'
+                          ? 'opacity-100 translate-y-0 blur-none scale-100'
+                          : 'opacity-100'
+                  }`} 
+                  id="ai-recommendations-list"
+                >
+                  {recommendedProducts.map((product, index) => {
+                    const isTopMatch = index === 0;
+                    const isWatched = watchlist.includes(product.id);
+                    const isCompared = compareList.includes(product.dbProductId || product.id);
+                    const isExpanded = expandedProductId === product.id;
+
+                    return (
                     <motion.div
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1, duration: 0.4 }}
+                      transition={{ delay: index * 0.22, duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
                       className={`relative border bg-white rounded-3xl p-6 sm:p-8 transition-all ${
                         isTopMatch 
                           ? 'border-amber-500/30 shadow-xl bg-amber-500/[0.005]' 
@@ -1657,7 +2043,13 @@ export default function AIFinder({
                     >
                       {/* Top Highlight Ribbon / Badge */}
                       {product.assignedBadge && (
-                        <div className="absolute top-0 left-6 sm:left-8 -translate-y-1/2 flex items-center space-x-1 bg-amber-850 text-[#faf9f6] text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md z-10 border border-amber-700">
+                        <div 
+                          className={`absolute top-0 left-6 sm:left-8 -translate-y-1/2 flex items-center space-x-1 bg-amber-850 text-[#faf9f6] text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md z-10 border border-amber-700 transition-all duration-500 ${
+                            transitionStep === 'badge-reveal' || transitionStep === 'idle'
+                              ? 'opacity-100 translate-y-[-50%]'
+                              : 'opacity-0 translate-y-0'
+                          }`}
+                        >
                           <span>{product.assignedBadge}</span>
                         </div>
                       )}
@@ -1707,7 +2099,13 @@ export default function AIFinder({
                             </div>
 
                             {/* Score circular visual */}
-                            <div className="flex items-center space-x-3 bg-stone-50 border border-stone-200 rounded-2xl p-2.5 px-4 self-start">
+                            <div 
+                              className={`flex items-center space-x-3 bg-stone-50 border border-stone-200 rounded-2xl p-2.5 px-4 self-start transition-all duration-500 ${
+                                transitionStep === 'badge-reveal' || transitionStep === 'idle'
+                                  ? 'opacity-100 scale-100'
+                                  : 'opacity-0 scale-95'
+                              }`}
+                            >
                               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-700 border border-green-200 font-sans font-black text-sm">
                                 {product.matchScore}%
                               </div>
@@ -1819,7 +2217,13 @@ export default function AIFinder({
                           </div>
 
                           {/* SECTION 5: AI Buying Confidence Card */}
-                          <div className="bg-amber-500/[0.02] border border-amber-800/10 rounded-2xl p-4 sm:p-5 space-y-2">
+                          <div 
+                            className={`bg-amber-500/[0.02] border border-amber-800/10 rounded-2xl p-4 sm:p-5 space-y-2 transition-all duration-500 ${
+                              transitionStep === 'badge-reveal' || transitionStep === 'idle'
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            }`}
+                          >
                             <div className="flex items-center justify-between">
                               <h4 className="text-[10px] font-sans font-bold text-amber-800 uppercase tracking-widest flex items-center space-x-1.5">
                                 <ShieldCheck className="h-4 w-4 text-amber-800" />
@@ -1972,6 +2376,8 @@ export default function AIFinder({
                   );
                 })}
               </div>
+              )}
+            </div>
             )}
 
             {/* SECTION 9: Buy with Confidence Decision Support Section */}

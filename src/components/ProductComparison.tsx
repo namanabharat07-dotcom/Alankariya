@@ -1467,7 +1467,7 @@ export default function ProductComparison({
 
             {/* 8. BUY WITH CONFIDENCE (Premium Card) */}
             {sortedProductsForDashboard.length > 0 && (
-              <div className="relative rounded-3xl border-2 border-amber-500/40 bg-gradient-to-br from-[#faf9f6] via-white to-amber-50/10 p-6 sm:p-8 shadow-md overflow-hidden text-left">
+              <div className="relative rounded-3xl border-2 border-amber-500/40 bg-gradient-to-br from-[#faf9f6] via-stone-100 to-amber-50/10 p-6 sm:p-8 shadow-md overflow-hidden text-left">
                 <div className="absolute top-0 right-0 h-40 w-40 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="flex items-center space-x-2 mb-4">
                   <Sparkles className="h-5 w-5 text-amber-600 fill-amber-500" />

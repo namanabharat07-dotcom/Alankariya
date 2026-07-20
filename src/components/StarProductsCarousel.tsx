@@ -73,7 +73,7 @@ export default function StarProductsCarousel({ starProducts, onStarClick }: Star
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-3xl border border-stone-200/80 bg-gradient-to-br from-stone-50 via-white to-amber-50/20 p-6 md:p-8 shadow-sm">
+      <div className="relative overflow-hidden rounded-3xl border border-stone-200/80 bg-gradient-to-br from-stone-50 via-stone-100 to-amber-50/20 p-6 md:p-8 shadow-sm">
         {/* Glow effect */}
         <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -left-24 -bottom-24 h-64 w-64 rounded-full bg-stone-500/5 blur-3xl pointer-events-none" />
