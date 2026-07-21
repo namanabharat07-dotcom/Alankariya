@@ -1018,8 +1018,8 @@ export default function AdminDashboard({
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center space-x-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all whitespace-nowrap outline-none ${
                 activeTab === tab.id
-                  ? 'bg-slate-900 text-white shadow'
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                  ? 'bg-amber-900 text-stone-50 shadow-md border border-amber-800/30'
+                  : 'text-stone-400 hover:text-white hover:bg-stone-100'
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -1117,7 +1117,7 @@ export default function AdminDashboard({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                  <tr className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100">
                     <th className="p-4">Product Name</th>
                     <th className="p-4">Total Views</th>
                     <th className="p-4">Affiliate Clicks</th>
@@ -1165,7 +1165,7 @@ export default function AdminDashboard({
                     Enterprise
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-200 leading-relaxed">
                   Analyze and import affiliate products instantly. Paste a product URL from <span className="text-white font-semibold">Amazon, Flipkart, Myntra, Nykaa, Ajio, H&M, Croma, Reliance Digital, or Tata CLiQ</span> to automatically generate original editorial reviews, populate prices, gather specs, and draft SEO content.
                 </p>
               </div>
@@ -1179,7 +1179,7 @@ export default function AdminDashboard({
                       placeholder="Paste e-commerce product URL..."
                       value={importUrl}
                       onChange={(e) => setImportUrl(e.target.value)}
-                      className="w-full text-xs text-slate-100 placeholder-slate-400 bg-slate-900/60 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 rounded-2xl p-3.5 pr-10 outline-none transition-all shadow-inner"
+                      className="w-full text-xs text-white placeholder-slate-300 bg-slate-950/70 border border-slate-600 hover:border-slate-500 focus:border-indigo-500 rounded-2xl p-3.5 pr-10 outline-none transition-all shadow-inner"
                     />
                     {importUrl && (
                       <button
@@ -1246,13 +1246,13 @@ export default function AdminDashboard({
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-slate-500 font-mono">
+            <span className="text-xs font-bold text-slate-700 font-mono">
               Total Catalog items: {products.length}
             </span>
             <button
               onClick={handleOpenAddProduct}
               id="admin-add-product-btn"
-              className="inline-flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 py-2.5 px-4 text-xs font-bold text-white rounded-xl shadow-md shadow-blue-500/10 transition-colors"
+              className="inline-flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 py-2.5 px-4 text-xs font-bold text-white rounded-xl shadow-md shadow-blue-500/15 transition-all active:scale-[0.98] cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               <span>Add New Product</span>
@@ -1280,7 +1280,7 @@ export default function AdminDashboard({
           <div className="rounded-2xl border border-slate-100 bg-white overflow-x-auto shadow-sm" id="admin-products-table">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
+                <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-600 border-b border-slate-100">
                   <th className="p-4 w-10">
                     <input
                       type="checkbox"
@@ -1331,8 +1331,8 @@ export default function AdminDashboard({
                             className="h-10 w-10 rounded-lg object-cover bg-slate-100 shrink-0"
                           />
                           <div className="max-w-xs sm:max-w-md">
-                            <p className="font-bold text-slate-900 truncate">{p.title}</p>
-                            <div className="flex space-x-2 mt-0.5">
+                            <p className="font-bold text-slate-900 line-clamp-2 leading-snug">{p.title}</p>
+                            <div className="flex space-x-2 mt-1">
                               {p.isBestSeller && <span className="text-[9px] bg-amber-500 text-white font-bold px-1 rounded uppercase">Best</span>}
                               {p.isEditorsChoice && <span className="text-[9px] bg-blue-600 text-white font-bold px-1 rounded uppercase">Editor</span>}
                               {p.isDailyStar && <span className="text-[9px] bg-amber-800 text-white font-bold px-1.5 py-0.5 rounded uppercase">★ Star</span>}
@@ -2364,7 +2364,7 @@ export default function AdminDashboard({
               {/* Core Specs */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Product Title</label>
+                  <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Product Title</label>
                   <input
                     type="text" required
                     value={pForm.title} onChange={e => setPForm({ ...pForm, title: e.target.value })}
@@ -2373,7 +2373,7 @@ export default function AdminDashboard({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Brand Name</label>
+                  <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Brand Name</label>
                   <input
                     type="text" required
                     value={pForm.brand} onChange={e => setPForm({ ...pForm, brand: e.target.value })}
@@ -2382,7 +2382,7 @@ export default function AdminDashboard({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Category</label>
+                  <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Category</label>
                   <select
                     value={pForm.category} onChange={e => setPForm({ ...pForm, category: e.target.value })}
                     className="w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none focus:border-blue-500 bg-white"
@@ -2396,7 +2396,7 @@ export default function AdminDashboard({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Subcategory</label>
+                  <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Subcategory</label>
                   <input
                     type="text"
                     value={pForm.subcategory} onChange={e => setPForm({ ...pForm, subcategory: e.target.value })}
@@ -2409,7 +2409,7 @@ export default function AdminDashboard({
               {/* Pricing & Ratings */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Affiliate Price ($)</label>
+                  <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Affiliate Price ($)</label>
                   <input
                     type="number" required
                     value={pForm.price} onChange={e => setPForm({ ...pForm, price: Number(e.target.value) })}
@@ -2417,7 +2417,7 @@ export default function AdminDashboard({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Original Price ($)</label>
+                  <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Original Price ($)</label>
                   <input
                     type="number" required
                     value={pForm.originalPrice} onChange={e => setPForm({ ...pForm, originalPrice: Number(e.target.value) })}
@@ -2425,7 +2425,7 @@ export default function AdminDashboard({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Editor Rating (1-5)</label>
+                  <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Editor Rating (1-5)</label>
                   <input
                     type="number" step="0.1" max="5" min="1" required
                     value={pForm.rating} onChange={e => setPForm({ ...pForm, rating: Number(e.target.value) })}
